@@ -1,6 +1,8 @@
 # GoPro_Web_RC
 Control multiple GoPros in your web browser
 
+<img src="https://github.com/sepp89117/GoPro_Web_RC/blob/main/preview.png" width="630">
+
 Web browsers compatible with Bluetooth API see:
 https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API#browser_compatibility
 
