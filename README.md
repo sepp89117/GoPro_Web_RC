@@ -12,7 +12,9 @@ https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API#browser_compa
 # How to start
 1. Start your GoPro and start pairing with remote
 2. Open the Bluetooth manager of your control device (PC, smartphone, etc.) and pair it with "GoPro XXXX". You will then receive a success message on both devices. (The "XXXX" in the name stands for the last 4 digits of the camera serial number)
-3. Open "GoPro_Web_RC.html" locally in a supported web browser. Alternatively, the HTML can be hosted over HTTPS. (Web Bluetooth requires TLS)
+3. Open "GoPro_Web_RC.html" locally in a supported web browser.
+-  Alternatively, the HTML can be hosted over HTTPS. (Web Bluetooth requires TLS)
+-  Or browse to https://sepp89117.github.io/GoPro_Web_RC/GoPro_Web_RC.html (thanks @KonradIT)
 4. Click on "Connect/Pair new".
 5. Your web browser will show you available GoPros. Choose one and click connect.
 6. After successful connection, the camera is displayed in the "Connected devices" list.
