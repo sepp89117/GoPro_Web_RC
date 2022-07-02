@@ -23,6 +23,4 @@ https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API#browser_compa
 # TODO
 - Check if it works with multiple cameras and with how many
 - Check which cameras it works with and which don't
-- Get all model IDs of known GoPro cameras and assign them the model designation. (in readValue() -> case characteristic.uuid == modelNoUUID)
-- Get the current mode of the camera via BLE
-- Get bluetooth RSSI of camera
+- Get all model IDs of known GoPro cameras and assign them the model designation.
