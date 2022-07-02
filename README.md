@@ -1,5 +1,5 @@
 # GoPro_Web_RC
-Control multiple GoPros in your web browser
+Easy control of multiple GoPros for everyone without additional hardware
 
 <img src="https://github.com/sepp89117/GoPro_Web_RC/blob/main/preview.png" width="630">
 
