@@ -26,7 +26,7 @@
 
         .list-btn {
             margin: 0;
-            padding: 2px 5px;
+            /* padding: 2px 5px; */
         }
 
         input:hover {
@@ -90,11 +90,33 @@
             border-collapse: collapse;
             margin: 10px 0;
             font-size: 0.9em;
-            min-width: 569px;
+            width: 100%;
         }
 
         .styled-table td {
             padding: 5px 0;
+        }
+
+        .styled-table th {
+            padding: 0px 5px;
+        }
+
+        .styled-table .cam-th {
+            border-right: 1px solid #fff;
+        }
+
+        .styled-table .cam-td {
+            border-right: 1px solid #fff;
+            text-align: left;
+        }
+
+        .styled-table .cam-td span {
+            margin: 0px 5px;
+            white-space: nowrap;
+        }
+
+        .styled-table .cam-td div {
+            padding: 2px;
         }
 
         .styled-table thead tr {
@@ -117,14 +139,30 @@
 
         .menu {
             width: fit-content;
-            border-radius: 5px;
-            overflow: hidden;
-            background: #005eab;
             padding: 6px 4px 2px 4px;
-            border-top: 2px solid #fff;
-            border-bottom: 2px solid #fff;
+            background-color: #1c1c1c;
             transition: .3s;
             position: absolute;
+            list-style: none;
+            border-radius: 5px;
+        }
+
+        .menu-title {
+            margin: -6px -4px 15px -4px;
+            border-bottom: 2px solid white;
+            padding: 6px;
+            border-radius: 5px;
+            background-color: #004073;
+            font-size: 10pt;
+            /* color: #78d8ff; */
+            color: white;
+            border-top: 2px solid white;
+        }
+
+        .has-submenu::after {
+            content: "\25BC";
+            float: right;
+            margin-left: 5px;
         }
 
         .item {
@@ -142,6 +180,29 @@
         .item:hover {
             background: #009fe0;
             transition: .3s;
+        }
+
+        .menu .submenu {
+            display: none;
+            position: absolute;
+            background-color: #1c1c1c;
+            padding: 0px;
+            color: white;
+            border-radius: 5px;
+            left: -20px;
+            margin-top: 7px;
+        }
+
+        .menu .has-submenu:hover .submenu,
+        .menu .has-submenu:active .submenu,
+        .menu .has-submenu:focus .submenu {
+            display: block;
+        }
+
+        .has-submenu:hover::after,
+        .has-submenu:active::after,
+        .has-submenu:focus::after {
+            content: "\25B2";
         }
     </style>
 </head>
@@ -183,18 +244,12 @@
         </div>
     </fieldset>
     <fieldset class="foldable expanded">
-        <legend onclick="this.parentNode.classList.toggle('expanded');toggleCamMenu();"><b>Connected devices</b></legend>
+        <legend onclick="this.parentNode.classList.toggle('expanded');toggleCamMenu();"><b>Connected devices</b>
+        </legend>
         <table id="dev_list" class="styled-table">
             <thead>
                 <tr>
-                    <th>No</th>
-                    <th>Name</th>
-                    <th>Model</th>
-                    <th>Preset</th>
-                    <th>Battery</th>
-                    <th>Memory</th>
-                    <th title="Last Command">LC</th>
-                    <th title="Last Error">LE</th>
+                    <th class="cam-th">Cam</th>
                     <th>Menu</th>
                 </tr>
             </thead>
@@ -203,27 +258,80 @@
     </fieldset>
 
     <ul id="menu-box" class="menu" style="display: none;">
-        <li class="item" onclick="sendCommandToSingle(shutterOn, this.parentNode.dataset.camindex); toggleCamMenu();">
-            Shutter: on
+        <li class="menu-title has-submenu">Single Control
+            <ul class="submenu">
+                <li class="item"
+                    onclick="sendCommandToSingle(shutterOn, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Shutter: on</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(shutterOff, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Shutter: off</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(camSleep, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Put camera to sleep</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(wiFiAPoff, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    WiFi AP: off</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(wiFiAPon, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    WiFi AP: on</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(hilight, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Hilight moment</li>
+            </ul>
         </li>
-        <li class="item" onclick="sendCommandToSingle(shutterOff, this.parentNode.dataset.camindex); toggleCamMenu();">
-            Shutter: off
+
+        <li class="menu-title has-submenu">Single Load Preset
+            <ul class="submenu">
+                <li class="item"
+                    onclick="sendCommandToSingle(videoGroup, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Video Group</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(photoGroup, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Photo Group</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(timelapseGroup, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Timelapse Group</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(standard, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Standard</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(activity, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Activity</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(cinematic, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Cinematic</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(photo, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Photo</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(liveBurst, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Live Burst</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(burstPhoto, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Burst Photo</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(nightPhoto, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Night Photo</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(timeWarp, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Time Warp</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(timeLapse, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Time Lapse</li>
+                <li class="item"
+                    onclick="sendCommandToSingle(nightLapse, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Night Lapse</li>
+
+            </ul>
         </li>
-        <li class="item" onclick="sendCommandToSingle(camSleep, this.parentNode.dataset.camindex); toggleCamMenu();">
-            Put camera to sleep
-        </li>
-        <li class="item" onclick="sendCommandToSingle(wiFiAPoff, this.parentNode.dataset.camindex); toggleCamMenu();">
-            WiFi AP: off
-        </li>
-        <li class="item" onclick="sendCommandToSingle(wiFiAPon, this.parentNode.dataset.camindex); toggleCamMenu();">
-            WiFi AP: on
-        </li>
-        <li class="item" onclick="sendCommandToSingle(hilight, this.parentNode.dataset.camindex); toggleCamMenu();">
-            Hilight moment
-        </li>
-        <hr>
-        <li class="item" onclick="setDateTime(this.parentNode.dataset.camindex); toggleCamMenu();">
-            Set Date/Time
+
+        <li class="menu-title has-submenu">Single Settings
+            <ul class="submenu">
+                <li class="item"
+                    onclick="setDateTime(this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    Set Date/Time</li>
+            </ul>
         </li>
     </ul>
 </body>
@@ -322,7 +430,7 @@
     function onClickPair() {
         let filters = [];
         let options = {};
-        
+
         filters.push({ services: [controlServiceUUID] });
         options.filters = filters;
         options.optionalServices = [controlServiceUUID, defInfoUUID, battInfoUUID];
@@ -354,9 +462,9 @@
                 goProDevice.Name = server.device.name;
                 goProDevice.Model = "?";
                 goProDevice.ModelID = 0;
-                goProDevice.Preset = "?"; // TODO
+                goProDevice.Preset = "?";
                 goProDevice.Battery = "?";
-                goProDevice.Memory = "?"; // TODO
+                goProDevice.Memory = "?";
                 goProDevice.LC = "None";
                 goProDevice.LE = "None";
                 goProDevice.server.device.addEventListener('gattserverdisconnected', onDisconnected);
@@ -618,23 +726,21 @@
                         connectedDevs[i].LE = error_str;
                         break;
                     case settingsRespUUID:
-                        // do nothing with keep alive response
+                        if (resp[3] == 0x5B) { // Keep alive
+                            // do nothing with keep alive response
+                        }
                         break;
                     case queryRespUUID:
                         var resp = new Uint8Array(value.buffer);
-                        // TODO
-                        if (resp[3] == 0x36) {
-                            // Remaining space
+                        if (resp[3] == 0x36) { // Remaining space
                             let bytes = [resp[5], resp[6], resp[7], resp[8], resp[9], resp[10], resp[11], resp[12]];
                             let uint8bytes = Uint8Array.from(bytes);
                             let dataview = new DataView(uint8bytes.buffer);
                             let int64be = dataview.getBigUint64(0);
 
                             connectedDevs[i].Memory = parseFloat(parseFloat(int64be / 1024n) / 1024.00).toFixed(2) + " GB";
-
                             sendQueryToSingle(qPreset, i);
-                        } else if (resp[3] == 0x61) {
-                            // Active preset
+                        } else if (resp[3] == 0x61) { // Active preset
                             let bytes = [resp[5], resp[6], resp[7], resp[8]];
                             let uint8bytes = Uint8Array.from(bytes);
                             let dataview = new DataView(uint8bytes.buffer);
@@ -665,7 +771,7 @@
     function updateList() {
         var tBody = "";
         for (var i = 0; i < connectedDevs.length; i++) {
-            tBody += '<tr><td>' + (i + 1) + '</td><td>' + connectedDevs[i].Name + "</td><td>" + connectedDevs[i].Model + "</td><td>" + connectedDevs[i].Preset + "</td><td>" + connectedDevs[i].Battery + "%</td><td>" + connectedDevs[i].Memory + "</td><td>" + connectedDevs[i].LC + "</td><td>" + connectedDevs[i].LE + "</td><td><input type=\"button\" class=\"list-btn\" value=\"&#9776;\" onclick=\"toggleCamMenu(this, " + i + ");\"></td></tr>\n";
+            tBody += '<tr><td class="cam-td"><div><span><b>Name: </b>' + connectedDevs[i].Name + '</span> <span><b>Model: </b>' + connectedDevs[i].Model + '</span></div><div><span><b>Preset: </b>' + connectedDevs[i].Preset + '</span></div><div><span><b>Battery: </b>' + connectedDevs[i].Battery + '%</span> <span><b>Memory: </b>' + connectedDevs[i].Memory + '</span></div><!--<div><span><b>Last Command: </b>' + connectedDevs[i].LC + '</span> <span><b>Last Response: </b>' + connectedDevs[i].LE + '</span></div>--></td><td><input type="button" class="list-btn" value="&#9776;" onclick="toggleCamMenu(this,  ' + i + ');"></td></tr>';
         };
         dev_list_body.innerHTML = tBody;
     }
@@ -699,7 +805,7 @@
                 connectedDevs.splice(i, 1);
 
                 updateList();
-                return;
+                break;
             }
         }
 
