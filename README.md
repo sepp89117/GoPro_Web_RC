@@ -13,7 +13,11 @@ https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API#browser_compa
 - Chrome on Android device (App needs permission to search for nearby devices)
 
 # Successfully tested GoPro models
+- Hero 10 Black
+- Hero 9 Black
 - Hero 8 Black
+
+Thanks to KonradIT for testing!
 
 # How to start
 1. Start your GoPro and start pairing with remote
@@ -27,6 +31,6 @@ https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API#browser_compa
 7. Now you can add more cameras (step 4.) or control the connected cameras.
 
 # TODO
-- Check if it works with multiple cameras and with how many
+- Check how many cameras it works with at the same time. (currently two cameras tested simultaneously)
 - Check which cameras it works with and which don't
 - Get all model IDs of known GoPro cameras and assign them the model designation.
