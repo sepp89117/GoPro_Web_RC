@@ -6,6 +6,12 @@ Easy control of multiple GoPros for everyone without additional hardware
 Web browsers compatible with Bluetooth API see:
 https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API#browser_compatibility
 
+# Successfully tested web browsers
+- Chrome on PC
+- Edge on PC
+- Samsung Internet on Android device (App needs permission to search for nearby devices)
+- Chrome on Android device (App needs permission to search for nearby devices)
+
 # Successfully tested GoPro models
 - Hero 8 Black
 
