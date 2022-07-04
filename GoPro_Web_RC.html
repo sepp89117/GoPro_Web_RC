@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)https://sepp89117.github.io/GoPro_Web_RC/GoPro_Web_RC.html -->
 <html lang="en">
 
 <head>
@@ -337,513 +336,549 @@
             </ul>
         </li>
     </ul>
-
-
-    <script>
-        // Custom GoPro services
-        var controlServiceUUID = "0000fea6-0000-1000-8000-00805f9b34fb"; // Cam control service
-        // Standard services
-        var defInfoUUID = "0000180a-0000-1000-8000-00805f9b34fb";  // Device information
-        var battInfoUUID = "0000180f-0000-1000-8000-00805f9b34fb"; // Battery service
-        // Custom GoPro characteristics
-        var commandUUID = "b5f90072-aa8d-11e3-9046-0002a5d5c51b";       // Command [WRITE]
-        var commandRespUUID = "b5f90073-aa8d-11e3-9046-0002a5d5c51b";   // Command response [NOTIFY]
-        var settingsUUID = "b5f90074-aa8d-11e3-9046-0002a5d5c51b";      // Settings [WRITE]
-        var settingsRespUUID = "b5f90075-aa8d-11e3-9046-0002a5d5c51b";  // Settings response [NOTIFY]
-        var queryUUID = "b5f90076-aa8d-11e3-9046-0002a5d5c51b";      // Query [WRITE]
-        var queryRespUUID = "b5f90077-aa8d-11e3-9046-0002a5d5c51b";  // Query response [NOTIFY]
-        // Standard characteristics
-        var modelNoUUID = "00002a24-0000-1000-8000-00805f9b34fb";  // Model number
-        var battLevelUUID = "00002a19-0000-1000-8000-00805f9b34fb"; // Battery level [READ | NOTIFY] -> "100% battery level"
-
-        /*
-        * Commands
-        */
-        // The commands below are sent to pSettingsCharacteristic and responses/notifications are received on pSettingsRespCharacteristic
-        var keepAlive = Uint8Array.from([0x03, 0x5B, 0x01, 0x42]); // Only Hero 9 and 10 ? Hero 8 response is Error
-        // The commands below are sent to pCommandCharacteristic and responses/notifications are received on pCommandRespCharacteristic
-        var shutterOff = Uint8Array.from([0x03, 0x01, 0x01, 0x00]);
-        var shutterOn = Uint8Array.from([0x03, 0x01, 0x01, 0x01]);
-        var camSleep = Uint8Array.from([0x01, 0x05]);
-        var wiFiAPoff = Uint8Array.from([0x03, 0x17, 0x01, 0x00]);
-        var wiFiAPon = Uint8Array.from([0x03, 0x17, 0x01, 0x01]);
-        var hilight = Uint8Array.from([0x01, 0x18]);
-        var videoGroup = Uint8Array.from([0x04, 0x3E, 0x02, 0x03, 0xE8]);
-        var photoGroup = Uint8Array.from([0x04, 0x3E, 0x02, 0x03, 0xE9]);
-        var timelapseGroup = Uint8Array.from([0x04, 0x3E, 0x02, 0x03, 0xEA]);
-        var standard = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x00, 0x00, 0x00]);
-        var activity = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x00, 0x00, 0x01]);
-        var cinematic = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x00, 0x00, 0x02]);
-        var photo = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x01, 0x00, 0x00]);
-        var liveBurst = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x01, 0x00, 0x01]);
-        var burstPhoto = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x01, 0x00, 0x02]);
-        var nightPhoto = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x01, 0x00, 0x03]);
-        var timeWarp = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x02, 0x00, 0x00]);
-        var timeLapse = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x02, 0x00, 0x01]);
-        var nightLapse = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x02, 0x00, 0x02]);
-        // Querys
-        var qSpace = Uint8Array.from([0x02, 0x13, 0x36]);
-        var qPreset = Uint8Array.from([0x02, 0x13, 0x61]);
-
-        // TODO get all GoPro model IDs
-        var gopro_models = {
-            57: "Hero 10 Black",
-            55: "Hero 9 Black",
-            51: "GoPro Max",
-            50: "Hero 8 Black",
-            30: "Hero 7 Black",
-            24: "Hero 6 Black",
-            21: "Hero 5 Session",
-            19: "Hero 5 Black",
-        }
-        var presets = {
-            0x00000000: "Standard",
-            0x00000001: "Activity",
-            0x00000002: "Cinematic",
-            0x00000003: "Slo-Mo",
-            0x00000004: "Ultra Slo-Mo",
-            0x00000005: "Basic",
-            0x00010000: "Photo",
-            0x00010001: "Live Burst",
-            0x00010002: "Burst Photo",
-            0x00010003: "Night Photo",
-            0x00020000: "Time Warp",
-            0x00020001: "Time Lapse",
-            0x00020002: "Night Lapse",
-            0x00030000: "Max Video",
-            0x00040000: "Max Photo",
-            0x00050000: "Max Timewarp",
-        }
-        var connectedDevs = [];
-        var isConnecting = false;
-
-        var dev_list_body = document.getElementById("dev_list").tBodies[0];
-
-        window.addEventListener("DOMContentLoaded", function () {
-            showInfo("Click on 'Connect/Pair new'", 0);
-
-            window.setInterval(intervalActions, 1000);
-        });
-
-        function onClickPair() {
-            let filters = [];
-            let options = {};
-
-            filters.push({ services: [controlServiceUUID] });
-            options.filters = filters;
-            options.optionalServices = [controlServiceUUID, defInfoUUID, battInfoUUID];
-
-            console.log('Requesting Bluetooth Device...');
-            console.log('with ' + JSON.stringify(options));
-
-            navigator.bluetooth.requestDevice(options)
-                .then(device => {
-                    console.log("Connecting to Cam '" + device.name + "'.");
-                    showInfo("Connecting to Cam '" + device.name + "'. Please wait...", 0);
-
-                    // Check if device is always conencted
-                    for (var i = 0; i < connectedDevs.length; i++) {
-                        if (connectedDevs[i].server.device.id == device.id && connectedDevs[i].server.connected) {
-                            showInfo("The choosen Cam '" + device.name + "' is always connected!", 3000);
-                            return; // device is always connected
-                        }
-                    }
-                    isConnecting = true;
-                    return device.gatt.connect();
-                })
-                .then(server => {
-                    if (server == null) return;
-                    isConnecting = false;
-                    console.log('GATT connected');
-
-                    var goProDevice = {};
-                    goProDevice.server = server;
-                    goProDevice.Name = server.device.name;
-                    goProDevice.Model = "?";
-                    goProDevice.ModelID = 0;
-                    goProDevice.Preset = "N/A";
-                    goProDevice.Battery = "?";
-                    goProDevice.Memory = "?";
-                    goProDevice.LC = "None";
-                    goProDevice.LE = "None";
-                    goProDevice.server.device.addEventListener('gattserverdisconnected', onDisconnected);
-
-                    // Save connected Cam in array
-                    connectedDevs.push(goProDevice);
-
-                    console.log('Getting Services...');
-                    return server.getPrimaryServices();
-                })
-                .then(service => {
-                    if (service == null) return;
-
-                    var n = service.length;
-                    for (var i = 0; i < n; i++) {
-                        switch (service[i].uuid) {
-                            case controlServiceUUID:
-                                console.log('Got control Service');
-                                console.log('Getting control Characteristics...');
-                                getCharacteristic(service[i], commandUUID);
-                                getCharacteristic(service[i], commandRespUUID);
-                                getCharacteristic(service[i], settingsUUID);
-                                getCharacteristic(service[i], settingsRespUUID);
-                                getCharacteristic(service[i], queryUUID);
-                                getCharacteristic(service[i], queryRespUUID);
-                                break;
-                            case defInfoUUID:
-                                console.log('Got defInfo Service');
-                                console.log('Getting model_number_string Characteristic...');
-                                getCharacteristic(service[i], modelNoUUID);
-                                break;
-                            case battInfoUUID:
-                                console.log('Got battInfo Service');
-                                console.log('Getting battLevel Characteristic...');
-                                getCharacteristic(service[i], battLevelUUID);
-                                break;
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.log('ERROR! ' + error);
-                    showInfo(error, 0);
-                });
-        }
-
-        function getCharacteristic(service, uuid) {
-            service.getCharacteristic(uuid)
-                .then(characteristic => {
-                    if (characteristic == null) return;
-                    console.log('Got Characteristic');
-
-                    // Save characteristic in connectedDevs[i]
-                    for (var i = 0; i < connectedDevs.length; i++) {
-                        if (connectedDevs[i].server.device.id == characteristic.service.device.id) {
-
-                            switch (characteristic.uuid) {
-                                case commandUUID:
-                                    connectedDevs[i].commandCharacteristic = characteristic;
-                                    return;
-                                case commandRespUUID:
-                                    connectedDevs[i].commandRespCharacteristic = characteristic;
-                                    // Start Notification
-                                    connectedDevs[i].commandRespCharacteristic.startNotifications().then(_ => {
-                                        console.log('> Characteristic Notifications started');
-                                        connectedDevs[i].commandRespCharacteristic.addEventListener('characteristicvaluechanged',
-                                            handleRespNotifications);
-
-                                        showInfo("Cam '" + connectedDevs[i].server.device.name + "' connected!", 3000);
-                                        connectedDevs[i].lastKeepAlive = new Date();
-                                        connectedDevs[i].lastQuery = new Date(0);
-                                    });
-                                    return;
-                                case settingsUUID:
-                                    connectedDevs[i].settingsCharacteristic = characteristic;
-                                    return;
-                                case settingsRespUUID:
-                                    connectedDevs[i].settingsRespCharacteristic = characteristic;
-
-                                    // Start Notification
-                                    connectedDevs[i].settingsRespCharacteristic.startNotifications().then(_ => {
-                                        console.log('> Characteristic Notifications started');
-                                        connectedDevs[i].settingsRespCharacteristic.addEventListener('characteristicvaluechanged',
-                                            handleRespNotifications);
-                                    });
-                                    return;
-                                case queryUUID:
-                                    connectedDevs[i].queryCharacteristic = characteristic;
-                                    return;
-                                case queryRespUUID:
-                                    connectedDevs[i].queryRespCharacteristic = characteristic;
-
-                                    // Start Notification
-                                    connectedDevs[i].queryRespCharacteristic.startNotifications().then(_ => {
-                                        console.log('> Characteristic Notifications started');
-                                        connectedDevs[i].queryRespCharacteristic.addEventListener('characteristicvaluechanged',
-                                            handleRespNotifications);
-                                    });
-                                    return;
-                                case modelNoUUID:
-                                    connectedDevs[i].modelNoCharacteristic = characteristic;
-                                    readValue(characteristic);
-                                    return;
-                                case battLevelUUID:
-                                    connectedDevs[i].battLevelCharacteristic = characteristic;
-                                    readValue(characteristic);
-                                    return;
-                            }
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.log('ERROR! ' + error);
-                    showInfo(error, 0);
-                });
-        }
-
-        function readValue(characteristic) {
-            if (characteristic == null) return;
-            characteristic.readValue()
-                .then(value => {
-                    for (var i = 0; i < connectedDevs.length; i++) {
-                        if (connectedDevs[i].server.device.id == characteristic.service.device.id) {
-                            let decoder = new TextDecoder('utf-8');
-
-                            switch (characteristic.uuid) {
-                                case modelNoUUID:
-                                    let value_str = decoder.decode(value);
-
-                                    connectedDevs[i].ModelID = parseInt("0x" + value_str);
-
-                                    var model_name = gopro_models[connectedDevs[i].ModelID];
-                                    if (model_name != null)
-                                        connectedDevs[i].Model = model_name;
-                                    else {
-                                        connectedDevs[i].Model = connectedDevs[i].ModelID;
-                                        alert("Your GoPro model is unknown.\nPlease tell the autor your camera model and the model ID: " + connectedDevs[i].ModelID);
-                                    }
-
-                                    console.log('> Model is ' + connectedDevs[i].Model);
-
-                                    updateList();
-                                    return;
-
-                                case battLevelUUID:
-                                    connectedDevs[i].Battery = value.getUint8(0);
-                                    //console.log('> Battery Level is ' + connectedDevs[i].Battery + '%');
-
-                                    updateList();
-                                    return;
-                            }
-                        }
-                    }
-
-                })
-                .catch(error => {
-                    console.log('ERROR! ' + error);
-                    showInfo(error, 0);
-                });
-        }
-
-        function sendCommand(command) {
-            var headerLength = getHeaderLength(command);
-
-            for (var i = 0; i < connectedDevs.length; i++) {
-                if (connectedDevs[i].server != null)
-                    if (connectedDevs[i].server.connected) {
-                        connectedDevs[i].commandCharacteristic.writeValue(command);
-                        connectedDevs[i].LC = command[headerLength];
-                    }
-            }
-        }
-
-        function sendCommandToSingle(command, camIndex) {
-            var headerLength = getHeaderLength(command);
-
-            if (connectedDevs[camIndex].server != null)
-                if (connectedDevs[camIndex].server.connected) {
-                    connectedDevs[camIndex].commandCharacteristic.writeValue(command);
-                    connectedDevs[camIndex].LC = command[headerLength];
-                }
-        }
-
-        function sendSettingToSingle(setting, camIndex) {
-            var headerLength = getHeaderLength(setting);
-
-            if (connectedDevs[camIndex].server != null)
-                if (connectedDevs[camIndex].server.connected) {
-                    console.log('[sendSettingToSingle] ' + setting);
-                    connectedDevs[camIndex].settingsCharacteristic.writeValue(setting);
-                    connectedDevs[camIndex].LC = setting[headerLength];
-                }
-        }
-
-        function sendQueryToSingle(query, camIndex) {
-            var headerLength = getHeaderLength(query);
-
-            if (connectedDevs[camIndex].server != null)
-                if (connectedDevs[camIndex].server.connected) {
-                    console.log('[sendQueryToSingle] ' + query);
-                    connectedDevs[camIndex].queryCharacteristic.writeValue(query);
-                    connectedDevs[camIndex].LC = query[headerLength];
-                }
-        }
-
-        function setDateTime(camIndex) {
-            var now = new Date();
-            let yyH = now.getFullYear() & 0xFF;
-            let yyL = (now.getFullYear() >> 8) & 0xFF;
-            // Set date/time to 2022-01-02 03:04:05 	Command: 09: 0D: 07: 07:E6: 01: 02: 03: 04: 05
-            var command = Uint8Array.from([0x09, 0x0d, 0x07, yyL, yyH, (now.getMonth() + 1), now.getDate(), now.getHours(), now.getMinutes(), now.getSeconds()]);
-            sendCommandToSingle(command, camIndex);
-        }
-
-        function getHeaderLength(command) {
-            var headerLength = 0; // 11: Reserved (no msg)
-            if (getBit(command[0], 6) == 1 && getBit(command[0], 5) == 0)
-                headerLength = 3; // 10: Extended (16-bit)
-            else if (getBit(command[0], 6) == 0 && getBit(command[0], 5) == 1)
-                headerLength = 2; // 01: Extended (13-bit)
-            else if (getBit(command[0], 6) == 0 && getBit(command[0], 5) == 0)
-                headerLength = 1; // 00: General
-
-            return headerLength;
-        }
-
-        function getBit(num, bit) {
-            return ((num >> bit) % 2 != 0 ? 1 : 0)
-        }
-
-        function handleRespNotifications(event) {
-            let value = event.target.value;
-            let uuid = event.target.uuid;
-            let sender_id = event.target.service.device.id;
-            let bytes = [];
-
-            for (let i = 0; i < value.byteLength; i++) {
-                bytes.push(value.getUint8(i));
-            }
-
-            var headerLength = getHeaderLength(bytes);
-            var command = bytes[headerLength];
-            var error = bytes[headerLength + 1];
-            for (var i = 0; i < connectedDevs.length; i++) {
-                if (connectedDevs[i].server.device.id == sender_id) {
-                    switch (uuid) {
-                        case commandRespUUID:
-                            var error_str = "";
-                            switch (error) {
-                                case 0:
-                                    error_str = "Success";
-                                    break;
-                                case 1:
-                                    error_str = "Error";
-                                    break;
-                                case 2:
-                                    error_str = "Inv. Param.";
-                                    break;
-                                default:
-                                    error_str = "Unknown";
-                            }
-                            connectedDevs[i].LE = error_str;
-                            break;
-                        case settingsRespUUID:
-                            if (resp[3] == 0x5B) { // Keep alive
-                                // do nothing with keep alive response
-                            }
-                            break;
-                        case queryRespUUID:
-                            var resp = new Uint8Array(value.buffer);
-                            if (resp[3] == 0x36 && resp[4] == 8) { // Remaining space
-                                let bytes = [resp[5], resp[6], resp[7], resp[8], resp[9], resp[10], resp[11], resp[12]];
-                                let uint8bytes = Uint8Array.from(bytes);
-                                let dataview = new DataView(uint8bytes.buffer);
-                                let int64be = dataview.getBigUint64(0);
-
-                                connectedDevs[i].Memory = parseFloat(parseFloat(int64be / 1024n) / 1024.00).toFixed(2) + " GB";
-
-                                if (connectedDevs[i].ModelID > 21) // qPreset query not supported from Hero 5 Black
-                                    sendQueryToSingle(qPreset, i);
-                                else {
-
-                                    // TODO other way to get preset from GoPro Hero 5 Black?
-                                }
-                            } else if (resp[3] == 0x61 && resp[4] == 4) { // Active preset
-                                let bytes = [resp[5], resp[6], resp[7], resp[8]];
-                                let uint8bytes = Uint8Array.from(bytes);
-                                let dataview = new DataView(uint8bytes.buffer);
-                                let int32be = dataview.getUint32(0);
-
-                                if (presets[int32be] != null)
-                                    connectedDevs[i].Preset = presets[int32be];
-                                else
-                                    connectedDevs[i].Preset = "unknown";
-
-                                readValue(connectedDevs[i].battLevelCharacteristic);
-                            }
-                            break;
-                    }
-                }
-            }
-
-            updateList();
-        }
-
-        function showInfo(text, millis) {
-            document.getElementById("status").innerText = text;
-
-            if (millis > 0)
-                window.setTimeout(function () {
-                    document.getElementById("status").innerText = "";
-                }, millis);
-        }
-
-        function updateList() {
-            var tBody = "";
-            for (var i = 0; i < connectedDevs.length; i++) {
-                tBody += '<tr><td class="cam-td"><div><span><b>Name: </b>' + connectedDevs[i].Name + '</span> <span><b>Model: </b>' + connectedDevs[i].Model + '</span></div><div><span><b>Preset: </b>' + connectedDevs[i].Preset + '</span></div><div><span><b>Battery: </b>' + connectedDevs[i].Battery + '%</span> <span><b>Memory: </b>' + connectedDevs[i].Memory + '</span></div><!--<div><span><b>Last Command: </b>' + connectedDevs[i].LC + '</span> <span><b>Last Response: </b>' + connectedDevs[i].LE + '</span></div>--></td><td><input type="button" class="list-btn" value="&#9776;" onclick="toggleCamMenu(this,  ' + i + ');"></td></tr>';
-            };
-            dev_list_body.innerHTML = tBody;
-        }
-
-        function toggleCamMenu(btn, camIndex) {
-            var menuBox = document.getElementById('menu-box');
-            if (menuBox.style.display == "block" || btn == null) { // if is menuBox displayed, hide it
-                menuBox.style.display = "none";
-                menuBox.dataset.camindex = -1;
-            }
-            else { // if is menuBox hidden, display it
-                menuBox.style.display = "block";
-                menuBox.dataset.camindex = camIndex;
-
-                // get the rect of button
-                var btnRect = btn.getBoundingClientRect();
-                var menuBoxRect = menuBox.getBoundingClientRect();
-                // Set the position for menu
-                menuBox.style.top = (btnRect.top + 10) + "px";
-                menuBox.style.left = (btnRect.right - menuBoxRect.width) + "px";
-            }
-        }
-
-        function onDisconnected(event) {
-            let sender_id = event.target.id;
-
-            for (var i = 0; i < connectedDevs.length; i++) {
-                if (connectedDevs[i].server.device.id == sender_id) {
-                    showInfo("Cam '" + connectedDevs[i].server.device.name + "' disconnected.", 5000);
-
-                    connectedDevs.splice(i, 1);
-
-                    updateList();
-                    break;
-                }
-            }
-
-            // Close menu
-            toggleCamMenu();
-        }
-
-        function intervalActions() {
-            if (!isConnecting)
-                for (var i = 0; i < connectedDevs.length; i++) {
-                    var now = new Date();
-
-                    // Send "keep alive" every 60 seconds; only for models newer then hero 8
-                    if (now - connectedDevs[i].lastKeepAlive > 60000 && connectedDevs[i].ModelID > 50) {
-                        sendSettingToSingle(i, keepAlive);
-                        connectedDevs[i].lastKeepAlive = now;
-                    }
-
-                    // Query "Remaining space" and "Active preset" every
-                    if (now - connectedDevs[i].lastQuery > 2000) {
-                        sendQueryToSingle(qSpace, i);
-                        connectedDevs[i].lastQuery = now;
-                    }
-
-                }
-        }
-    </script>
-
-
 </body>
+
+<script>
+    // Custom GoPro services
+    var controlServiceUUID = "0000fea6-0000-1000-8000-00805f9b34fb"; // Cam control service
+    // Standard services
+    var defInfoUUID = "0000180a-0000-1000-8000-00805f9b34fb";  // Device information
+    var battInfoUUID = "0000180f-0000-1000-8000-00805f9b34fb"; // Battery service
+    // Custom GoPro characteristics
+    var commandUUID = "b5f90072-aa8d-11e3-9046-0002a5d5c51b";       // Command [WRITE]
+    var commandRespUUID = "b5f90073-aa8d-11e3-9046-0002a5d5c51b";   // Command response [NOTIFY]
+    var settingsUUID = "b5f90074-aa8d-11e3-9046-0002a5d5c51b";      // Settings [WRITE]
+    var settingsRespUUID = "b5f90075-aa8d-11e3-9046-0002a5d5c51b";  // Settings response [NOTIFY]
+    var queryUUID = "b5f90076-aa8d-11e3-9046-0002a5d5c51b";      // Query [WRITE]
+    var queryRespUUID = "b5f90077-aa8d-11e3-9046-0002a5d5c51b";  // Query response [NOTIFY]
+    // Standard characteristics
+    var modelNoUUID = "00002a24-0000-1000-8000-00805f9b34fb";  // Model number
+    var battLevelUUID = "00002a19-0000-1000-8000-00805f9b34fb"; // Battery level [READ | NOTIFY] -> "100% battery level"
+
+    /*
+    * Commands
+    */
+    // Settings (0x0074)
+    var keepAlive = Uint8Array.from([0x03, 0x5B, 0x01, 0x42]); // Only Hero 9 and 10 ? Hero 8 response is Error
+    // Commands (0x0072)
+    var shutterOff = Uint8Array.from([0x03, 0x01, 0x01, 0x00]);
+    var shutterOn = Uint8Array.from([0x03, 0x01, 0x01, 0x01]);
+    var camSleep = Uint8Array.from([0x01, 0x05]);
+    var wiFiAPoff = Uint8Array.from([0x03, 0x17, 0x01, 0x00]);
+    var wiFiAPon = Uint8Array.from([0x03, 0x17, 0x01, 0x01]);
+    var hilight = Uint8Array.from([0x01, 0x18]);
+    var videoGroup = Uint8Array.from([0x04, 0x3E, 0x02, 0x03, 0xE8]);
+    var photoGroup = Uint8Array.from([0x04, 0x3E, 0x02, 0x03, 0xE9]);
+    var timelapseGroup = Uint8Array.from([0x04, 0x3E, 0x02, 0x03, 0xEA]);
+    var standard = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x00, 0x00, 0x00]);
+    var activity = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x00, 0x00, 0x01]);
+    var cinematic = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x00, 0x00, 0x02]);
+    var photo = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x01, 0x00, 0x00]);
+    var liveBurst = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x01, 0x00, 0x01]);
+    var burstPhoto = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x01, 0x00, 0x02]);
+    var nightPhoto = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x01, 0x00, 0x03]);
+    var timeWarp = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x02, 0x00, 0x00]);
+    var timeLapse = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x02, 0x00, 0x01]);
+    var nightLapse = Uint8Array.from([0x06, 0x40, 0x04, 0x00, 0x02, 0x00, 0x02]);
+    // Querys (0x0076)
+    var qSpace = Uint8Array.from([0x02, 0x13, 0x36]);
+    var qPreset = Uint8Array.from([0x02, 0x13, 0x61]);
+
+    // TODO get all GoPro model IDs
+    var gopro_models = {
+        57: "Hero 10 Black",
+        55: "Hero 9 Black",
+        51: "GoPro Max",
+        50: "Hero 8 Black",
+        30: "Hero 7 Black",
+        24: "Hero 6 Black",
+        21: "Hero 5 Session",
+        19: "Hero 5 Black",
+    }
+    var presets = {
+        0x00000000: "Standard",
+        0x00000001: "Activity",
+        0x00000002: "Cinematic",
+        0x00000003: "Slo-Mo",
+        0x00000004: "Ultra Slo-Mo",
+        0x00000005: "Basic",
+        0x00010000: "Photo",
+        0x00010001: "Live Burst",
+        0x00010002: "Burst Photo",
+        0x00010003: "Night Photo",
+        0x00020000: "Time Warp",
+        0x00020001: "Time Lapse",
+        0x00020002: "Night Lapse",
+        0x00030000: "Max Video",
+        0x00040000: "Max Photo",
+        0x00050000: "Max Timewarp",
+    }
+    var connectingDev = null;
+    var connectedDevs = [];
+    var dev_list_body = document.getElementById("dev_list").tBodies[0];
+
+    window.addEventListener("DOMContentLoaded", function () {
+        showInfo("Click on 'Connect/Pair new'", 0);
+        window.setInterval(intervalActions, 250);
+    });
+
+    /*
+    *   Pairing / Connecting
+    */
+    function onClickPair() {
+        let filters = [];
+        let options = {};
+
+        filters.push({ services: [controlServiceUUID] });
+        options.filters = filters;
+        options.optionalServices = [controlServiceUUID, defInfoUUID, battInfoUUID];
+
+        console.log('Requesting Bluetooth Device...');
+        console.log('with ' + JSON.stringify(options));
+
+        navigator.bluetooth.requestDevice(options)
+            .then(device => {
+                console.log("Connecting to Cam '" + device.name + "'.");
+                showInfo("Connecting to '" + device.name + "'. Make sure the camera is powered on and wait...", 0);
+
+                // Check if device is always conencted
+                for (var i = 0; i < connectedDevs.length; i++) {
+                    if (connectedDevs[i].server.device.id == device.id && connectedDevs[i].server.connected) {
+                        showInfo("The choosen Cam '" + device.name + "' is always connected!", 3000);
+                        return; // device is always connected
+                    }
+                }
+
+                // Timeout 60s for connect()
+                connectingDev = device;
+                window.setTimeout(function () {
+                    if (connectingDev != null) {
+                        showInfo("Connecting '" + connectingDev.name + "' timeout! Please retry!", 5000);
+                        connectingDev.gatt.disconnect();
+                        connectingDev = null;
+                    }
+                }, 60000);
+                return device.gatt.connect();
+            })
+            .then(server => {
+                if (server == null) return;
+                connectingDev = null;
+                console.log('GATT connected');
+
+                var goProDevice = {};
+                goProDevice.server = server;
+                goProDevice.Name = server.device.name;
+                goProDevice.Model = "?";
+                goProDevice.ModelID = 0;
+                goProDevice.Preset = "N/A";
+                goProDevice.Battery = "?";
+                goProDevice.Memory = "?";
+                goProDevice.LC = "None";
+                goProDevice.LE = "None";
+                goProDevice.server.device.addEventListener('gattserverdisconnected', onDisconnected);
+
+                // Save connected Cam in array
+                connectedDevs.push(goProDevice);
+
+                console.log('Getting Services...');
+                return server.getPrimaryServices();
+            })
+            .then(service => {
+                if (service == null) return;
+
+                var n = service.length;
+                for (var i = 0; i < n; i++) {
+                    switch (service[i].uuid) {
+                        case controlServiceUUID:
+                            console.log('Got control Service');
+                            console.log('Getting control Characteristics...');
+                            getCharacteristic(service[i], commandUUID);
+                            getCharacteristic(service[i], commandRespUUID);
+                            getCharacteristic(service[i], settingsUUID);
+                            getCharacteristic(service[i], settingsRespUUID);
+                            getCharacteristic(service[i], queryUUID);
+                            getCharacteristic(service[i], queryRespUUID);
+                            break;
+                        case defInfoUUID:
+                            console.log('Got defInfo Service');
+                            console.log('Getting model_number_string Characteristic...');
+                            getCharacteristic(service[i], modelNoUUID);
+                            break;
+                        case battInfoUUID:
+                            console.log('Got battInfo Service');
+                            console.log('Getting battLevel Characteristic...');
+                            getCharacteristic(service[i], battLevelUUID);
+                            break;
+                    }
+                }
+            })
+            .catch(error => {
+                connectingDev.gatt.disconnect();
+                connectingDev = null;
+                console.log('ERROR! ' + error);
+                showInfo(error, 0);
+            });
+    }
+
+    function getCharacteristic(service, uuid) {
+        service.getCharacteristic(uuid)
+            .then(characteristic => {
+                if (characteristic == null) return;
+                console.log('Got Characteristic');
+
+                // Save characteristic in connectedDevs[i]
+                for (var i = 0; i < connectedDevs.length; i++) {
+                    if (connectedDevs[i].server.device.id == characteristic.service.device.id) {
+
+                        switch (characteristic.uuid) {
+                            case commandUUID:
+                                connectedDevs[i].commandCharacteristic = characteristic;
+                                return;
+                            case commandRespUUID:
+                                connectedDevs[i].commandRespCharacteristic = characteristic;
+                                // Start Notification
+                                connectedDevs[i].commandRespCharacteristic.startNotifications().then(_ => {
+                                    console.log('> Characteristic Notifications started');
+                                    connectedDevs[i].commandRespCharacteristic.addEventListener('characteristicvaluechanged',
+                                        handleRespNotifications);
+
+                                    showInfo("Cam '" + connectedDevs[i].server.device.name + "' connected!", 3000);
+                                    connectedDevs[i].lastKeepAlive = new Date();
+
+                                    connectedDevs[i].lastPresetQuery = new Date(0);
+                                    connectedDevs[i].lastMemoryQuery = new Date(0);
+                                    connectedDevs[i].lastBatteryRead = new Date(0);
+                                });
+                                return;
+                            case settingsUUID:
+                                connectedDevs[i].settingsCharacteristic = characteristic;
+                                return;
+                            case settingsRespUUID:
+                                connectedDevs[i].settingsRespCharacteristic = characteristic;
+
+                                // Start Notification
+                                connectedDevs[i].settingsRespCharacteristic.startNotifications().then(_ => {
+                                    console.log('> Characteristic Notifications started');
+                                    connectedDevs[i].settingsRespCharacteristic.addEventListener('characteristicvaluechanged',
+                                        handleRespNotifications);
+                                });
+                                return;
+                            case queryUUID:
+                                connectedDevs[i].queryCharacteristic = characteristic;
+                                return;
+                            case queryRespUUID:
+                                connectedDevs[i].queryRespCharacteristic = characteristic;
+
+                                // Start Notification
+                                connectedDevs[i].queryRespCharacteristic.startNotifications().then(_ => {
+                                    console.log('> Characteristic Notifications started');
+                                    connectedDevs[i].queryRespCharacteristic.addEventListener('characteristicvaluechanged',
+                                        handleRespNotifications);
+                                });
+                                return;
+                            case modelNoUUID:
+                                connectedDevs[i].modelNoCharacteristic = characteristic;
+                                readValue(characteristic);
+                                return;
+                            case battLevelUUID:
+                                connectedDevs[i].battLevelCharacteristic = characteristic;
+                                readValue(characteristic);
+                                return;
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.log('ERROR! ' + error);
+                if (connectingDev != null) {
+                    showInfo("Connecting '" + connectingDev.name + "' error: '" + error + "'. Please retry!", 5000);
+                    connectingDev.gatt.disconnect();
+                    connectingDev = null;
+                }
+            });
+    }
+
+    /*
+    *   Active BLE communication
+    */
+    function readValue(characteristic) {
+        if (characteristic == null) return;
+        console.log("[readValue] " + characteristic.uuid);
+        characteristic.readValue()
+            .then(value => {
+                for (var i = 0; i < connectedDevs.length; i++) {
+                    if (connectedDevs[i].server.device.id == characteristic.service.device.id) {
+                        let decoder = new TextDecoder('utf-8');
+
+                        switch (characteristic.uuid) {
+                            case modelNoUUID:
+                                let value_str = decoder.decode(value);
+
+                                connectedDevs[i].ModelID = parseInt("0x" + value_str);
+
+                                var model_name = gopro_models[connectedDevs[i].ModelID];
+                                if (model_name != null)
+                                    connectedDevs[i].Model = model_name;
+                                else {
+                                    connectedDevs[i].Model = connectedDevs[i].ModelID;
+                                    alert("Your GoPro model is unknown.\nPlease tell the autor your camera model and the model ID: " + connectedDevs[i].ModelID);
+                                }
+
+                                console.log('> Model is ' + connectedDevs[i].Model);
+
+                                updateList();
+                                return;
+
+                            case battLevelUUID:
+                                connectedDevs[i].Battery = value.getUint8(0);
+                                //console.log('> Battery Level is ' + connectedDevs[i].Battery + '%');
+
+                                updateList();
+                                return;
+                        }
+                    }
+                }
+
+            })
+            .catch(error => {
+                console.log('ERROR! ' + error);
+                showInfo(error, 0);
+            });
+    }
+
+    function sendCommand(command) {
+        var headerLength = getHeaderLength(command);
+
+        for (var i = 0; i < connectedDevs.length; i++) {
+            if (connectedDevs[i].server != null)
+                if (connectedDevs[i].server.connected) {
+                    connectedDevs[i].commandCharacteristic.writeValue(command);
+                    connectedDevs[i].LC = command[headerLength];
+                }
+        }
+    }
+
+    function sendCommandToSingle(command, camIndex) {
+        var headerLength = getHeaderLength(command);
+
+        if (connectedDevs[camIndex].server != null)
+            if (connectedDevs[camIndex].server.connected) {
+                connectedDevs[camIndex].commandCharacteristic.writeValue(command);
+                connectedDevs[camIndex].LC = command[headerLength];
+            }
+    }
+
+    function sendSettingToSingle(setting, camIndex) {
+        var headerLength = getHeaderLength(setting);
+
+        if (connectedDevs[camIndex].server != null)
+            if (connectedDevs[camIndex].server.connected) {
+                console.log('[sendSettingToSingle] ' + setting);
+                connectedDevs[camIndex].settingsCharacteristic.writeValue(setting);
+                connectedDevs[camIndex].LC = setting[headerLength];
+            }
+    }
+
+    function sendQueryToSingle(query, camIndex) {
+        var headerLength = getHeaderLength(query);
+
+        if (connectedDevs[camIndex].server != null)
+            if (connectedDevs[camIndex].server.connected) {
+                console.log('[sendQueryToSingle] ' + query);
+                connectedDevs[camIndex].queryCharacteristic.writeValue(query);
+                connectedDevs[camIndex].LC = query[headerLength];
+            }
+    }
+
+    function setDateTime(camIndex) {
+        var now = new Date();
+        let yyH = now.getFullYear() & 0xFF;
+        let yyL = (now.getFullYear() >> 8) & 0xFF;
+        // Set date/time to 2022-01-02 03:04:05 	Command: 09: 0D: 07: 07:E6: 01: 02: 03: 04: 05
+        var command = Uint8Array.from([0x09, 0x0d, 0x07, yyL, yyH, (now.getMonth() + 1), now.getDate(), now.getHours(), now.getMinutes(), now.getSeconds()]);
+        sendCommandToSingle(command, camIndex);
+    }
+
+    function intervalActions() {
+        if (connectingDev == null)
+            for (var i = 0; i < connectedDevs.length; i++) {
+                var now = new Date();
+
+                // Send "keep alive" every 60 seconds; only for models newer then hero 8
+                if (now - connectedDevs[i].lastKeepAlive > 60000 && connectedDevs[i].ModelID > 50) {
+                    sendSettingToSingle(i, keepAlive);
+                    connectedDevs[i].lastKeepAlive = now;
+                }
+
+                // Query "Remaining space"
+                if (now - connectedDevs[i].lastPresetQuery > 5000) {
+                    sendQueryToSingle(qSpace, i);
+                    connectedDevs[i].lastPresetQuery = now;
+                }
+                // Query "Active preset"
+                if (now - connectedDevs[i].lastMemoryQuery > 1500) {
+                    if (connectedDevs[i].ModelID > 21) { // qPreset query not supported from Hero 5 Black
+                        sendQueryToSingle(qPreset, i);
+                    }
+                    else {
+                        // TODO other way to get preset from GoPro Hero 5 Black?
+                    }
+                    connectedDevs[i].lastMemoryQuery = now;
+                }
+                // Read "Battery level"
+                if (now - connectedDevs[i].lastBatteryRead > 10250) {
+                    readValue(connectedDevs[i].battLevelCharacteristic);
+                    connectedDevs[i].lastBatteryRead = now;
+                }
+
+                if (i < connectedDevs.length - 1)
+                    delay(50);
+            }
+    }
+
+    function handleRespNotifications(event) {
+        let value = event.target.value;
+        let uuid = event.target.uuid;
+        let sender_id = event.target.service.device.id;
+        let bytes = [];
+
+        for (let i = 0; i < value.byteLength; i++) {
+            bytes.push(value.getUint8(i));
+        }
+
+        var headerLength = getHeaderLength(bytes);
+        var command = bytes[headerLength];
+        var error = bytes[headerLength + 1];
+        for (var i = 0; i < connectedDevs.length; i++) {
+            if (connectedDevs[i].server.device.id == sender_id) {
+                switch (uuid) {
+                    case commandRespUUID:
+                        var error_str = "";
+                        switch (error) {
+                            case 0:
+                                error_str = "Success";
+                                break;
+                            case 1:
+                                error_str = "Error";
+                                break;
+                            case 2:
+                                error_str = "Inv. Param.";
+                                break;
+                            default:
+                                error_str = "Unknown";
+                        }
+                        connectedDevs[i].LE = error_str;
+                        break;
+                    case settingsRespUUID:
+                        if (resp[3] == 0x5B) { // Keep alive
+                            // do nothing with keep alive response
+                        }
+                        break;
+                    case queryRespUUID:
+                        var resp = new Uint8Array(value.buffer);
+                        if (resp[3] == 0x36 && resp[4] == 8) { // Remaining space
+                            let bytes = [resp[5], resp[6], resp[7], resp[8], resp[9], resp[10], resp[11], resp[12]];
+                            let uint8bytes = Uint8Array.from(bytes);
+                            let dataview = new DataView(uint8bytes.buffer);
+                            let int64be = dataview.getBigUint64(0);
+
+                            connectedDevs[i].Memory = parseFloat(parseFloat(int64be / 1024n) / 1024.00).toFixed(2) + " GB";
+                        } else if (resp[3] == 0x61 && resp[4] == 4) { // Active preset
+                            let bytes = [resp[5], resp[6], resp[7], resp[8]];
+                            let uint8bytes = Uint8Array.from(bytes);
+                            let dataview = new DataView(uint8bytes.buffer);
+                            let int32be = dataview.getUint32(0);
+
+                            if (presets[int32be] != null)
+                                connectedDevs[i].Preset = presets[int32be];
+                            else
+                                connectedDevs[i].Preset = "unknown";
+                        }
+                        break;
+                }
+            }
+        }
+
+        updateList();
+    }
+
+    function onDisconnected(event) {
+        let sender_id = event.target.id;
+
+        for (var i = 0; i < connectedDevs.length; i++) {
+            if (connectedDevs[i].server.device.id == sender_id) {
+                showInfo("Cam '" + connectedDevs[i].server.device.name + "' disconnected.", 5000);
+
+                connectedDevs.splice(i, 1);
+
+                updateList();
+                break;
+            }
+        }
+
+        // Close menu
+        toggleCamMenu();
+    }
+
+    /*
+    *   Helpers
+    */
+    function showInfo(text, millis) {
+        document.getElementById("status").innerText = text;
+
+        if (millis > 0)
+            window.setTimeout(function () {
+                document.getElementById("status").innerText = "";
+            }, millis);
+    }
+
+    function updateList() {
+        var tBody = "";
+        for (var i = 0; i < connectedDevs.length; i++) {
+            tBody += '<tr><td class="cam-td"><div><span><b>Name: </b>' + connectedDevs[i].Name + '</span> <span><b>Model: </b>' + connectedDevs[i].Model + '</span></div><div><span><b>Preset: </b>' + connectedDevs[i].Preset + '</span></div><div><span><b>Battery: </b>' + connectedDevs[i].Battery + '%</span> <span><b>Memory: </b>' + connectedDevs[i].Memory + '</span></div><!--<div><span><b>Last Command: </b>' + connectedDevs[i].LC + '</span> <span><b>Last Response: </b>' + connectedDevs[i].LE + '</span></div>--></td><td><input type="button" class="list-btn" value="&#9776;" onclick="toggleCamMenu(this,  ' + i + ');"></td></tr>';
+        };
+        dev_list_body.innerHTML = tBody;
+    }
+
+    function toggleCamMenu(btn, camIndex) {
+        var menuBox = document.getElementById('menu-box');
+        if (menuBox.style.display == "block" || btn == null) { // if is menuBox displayed, hide it
+            menuBox.style.display = "none";
+            menuBox.dataset.camindex = -1;
+        }
+        else { // if is menuBox hidden, display it
+            menuBox.style.display = "block";
+            menuBox.dataset.camindex = camIndex;
+
+            // get the rect of button
+            var btnRect = btn.getBoundingClientRect();
+            var menuBoxRect = menuBox.getBoundingClientRect();
+            // Set the position for menu
+            menuBox.style.top = (btnRect.top + 10) + "px";
+            menuBox.style.left = (btnRect.right - menuBoxRect.width) + "px";
+        }
+    }
+
+    function delay(millis) {
+        var s = new Date();
+        while (new Date() - s < millis);
+    }
+
+    function getHeaderLength(command) {
+        var headerLength = 0; // 11: Reserved (no msg)
+        if (getBit(command[0], 6) == 1 && getBit(command[0], 5) == 0)
+            headerLength = 3; // 10: Extended (16-bit)
+        else if (getBit(command[0], 6) == 0 && getBit(command[0], 5) == 1)
+            headerLength = 2; // 01: Extended (13-bit)
+        else if (getBit(command[0], 6) == 0 && getBit(command[0], 5) == 0)
+            headerLength = 1; // 00: General
+
+        return headerLength;
+    }
+
+    function getBit(num, bit) {
+        return ((num >> bit) % 2 != 0 ? 1 : 0)
+    }
+</script>
 
 </html>
