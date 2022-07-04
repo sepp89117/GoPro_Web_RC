@@ -1,5 +1,5 @@
 # GoPro_Web_RC
-Easy control of multiple GoPros for everyone without additional hardware
+Easily control multiple GoPros with the web browser via Bluetooth, without additional hardware.
 
 <img src="https://github.com/sepp89117/GoPro_Web_RC/blob/main/preview.png" width="630">
 
