@@ -1,6 +1,8 @@
 # GoPro_Web_RC
 Easily control multiple GoPros with the web browser via Bluetooth, without additional hardware.
 
+GoPro Bluetoothspecs are from https://gopro.github.io/OpenGoPro/ble
+
 <img src="https://github.com/sepp89117/GoPro_Web_RC/blob/main/preview.png" width="630">
 
 Web browsers compatible with Bluetooth API see:
@@ -16,8 +18,12 @@ https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API#browser_compa
 - Hero 10 Black
 - Hero 9 Black
 - Hero 8 Black
+- Hero 5 Black (load presets not working)
 
-Thanks to KonradIT for testing!
+# Number of cameras tested simultaneously
+5 Cams
+
+Thanks also to KonradIT for testing!
 
 # How to start
 1. Start your GoPro and start pairing with remote
