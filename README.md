@@ -40,3 +40,4 @@ Thanks also to KonradIT for testing!
 - Check how many cameras it works with at the same time. (currently two cameras tested simultaneously)
 - Check which cameras it works with and which don't
 - Get all model IDs of known GoPro cameras and assign them the model designation.
+- Find commands for Hero 5 load preset
