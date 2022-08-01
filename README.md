@@ -37,7 +37,7 @@ Thanks also to KonradIT for testing!
 7. Now you can add more cameras (step 4.) or control the connected cameras.
 
 # TODO
-- Check how many cameras it works with at the same time. (currently two cameras tested simultaneously)
+- Check how many cameras it works with at the same time.
 - Check which cameras it works with and which don't
 - Get all model IDs of known GoPro cameras and assign them the model designation.
 - Find commands for Hero 5 load preset
