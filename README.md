@@ -21,7 +21,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API#browser_compa
 - Hero 5 Black (load presets not working)
 
 # Number of cameras tested simultaneously
-5 Cams
+The latest Bluetooth 5 specification allows up to 7 device connections simultaneously to a primary device in active mode
 
 Thanks also to KonradIT for testing!
 
