@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 
+<!--
+    Author: sepp89117
+    Version: 1.1
+    Date: 2022-12-11
+-->
+
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>GoPro BLE RC</title>
@@ -420,14 +426,22 @@
     var dev_list_body = document.getElementById("dev_list").tBodies[0];
 
     window.addEventListener("DOMContentLoaded", function () {
-        showInfo("Click on 'Connect/Pair new'", 0);
-        window.setInterval(intervalActions, 250);
+        if (navigator.bluetooth === undefined) {
+            showInfo("Bluetooth is not available!", 0);
+        } else {
+            showInfo("Click on 'Connect/Pair new'", 0);
+            window.setInterval(intervalActions, 250);
+        }
     });
 
     /*
     *   Pairing / Connecting
     */
     function onClickPair() {
+        if (navigator.bluetooth === undefined) {
+            showInfo("Bluetooth is not available!", 0);
+            return;
+        }
         let filters = [];
         let options = {};
 
