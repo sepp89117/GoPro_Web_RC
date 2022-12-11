@@ -531,8 +531,10 @@
                 }
             })
             .catch(error => {
-                connectingDev.gatt.disconnect();
-                connectingDev = null;
+                if (connectingDev != null) {
+                    connectingDev.gatt.disconnect();
+                    connectingDev = null;
+                }
                 console.log('ERROR! ' + error);
                 showInfo(error, 0);
             });
