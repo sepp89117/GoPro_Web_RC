@@ -3,7 +3,7 @@
 
 <!--
     Author: sepp89117
-    Version: 1.1
+    Version: 1.2
     Date: 2022-12-11
 -->
 
@@ -76,8 +76,6 @@
         }
 
         fieldset.foldable>legend::after {
-            width: 11px;
-            display: inline-block;
             content: "+";
             margin: 0px 5px 0px 15px;
             padding: 0px 8px 5px 8px;
@@ -259,7 +257,7 @@
             <thead>
                 <tr>
                     <th class="cam-th">Cam</th>
-                    <th>Menu</th>
+                    <th style="width: 86px;">Menu</th>
                 </tr>
             </thead>
             <tbody>
@@ -442,6 +440,7 @@
     function onClickPair() {
         if (navigator.bluetooth === undefined) {
             showInfo("Bluetooth is not available!", 0);
+            alert("Bluetooth is not available!");
             return;
         }
         let filters = [];
@@ -534,9 +533,9 @@
                 if (connectingDev != null) {
                     connectingDev.gatt.disconnect();
                     connectingDev = null;
+                    showInfo(error, 0);
                 }
                 console.log('ERROR! ' + error);
-                showInfo(error, 0);
             });
     }
 
@@ -557,18 +556,31 @@
                             case commandRespUUID:
                                 connectedDevs[i].commandRespCharacteristic = characteristic;
                                 // Start Notification
-                                connectedDevs[i].commandRespCharacteristic.startNotifications().then(_ => {
-                                    console.log('> Characteristic Notifications started');
-                                    connectedDevs[i].commandRespCharacteristic.addEventListener('characteristicvaluechanged',
-                                        handleRespNotifications);
+                                connectedDevs[i].commandRespCharacteristic.startNotifications()
+                                    .then(_ => {
+                                        console.log('> Characteristic Notifications started');
+                                        connectedDevs[i].commandRespCharacteristic.addEventListener('characteristicvaluechanged',
+                                            handleRespNotifications);
 
-                                    showInfo("Cam '" + connectedDevs[i].server.device.name + "' connected!", 3000);
-                                    connectedDevs[i].lastKeepAlive = new Date();
+                                        showInfo("Cam '" + connectedDevs[i].server.device.name + "' connected!", 3000);
+                                        connectedDevs[i].lastKeepAlive = new Date();
 
-                                    connectedDevs[i].lastPresetQuery = new Date(0);
-                                    connectedDevs[i].lastMemoryQuery = new Date(0);
-                                    connectedDevs[i].lastBatteryRead = new Date(0);
-                                });
+                                        connectedDevs[i].lastPresetQuery = new Date(0);
+                                        connectedDevs[i].lastMemoryQuery = new Date(0);
+                                        connectedDevs[i].lastBatteryRead = new Date(0);
+                                    })
+                                    .catch(error => {
+                                        console.log('ERROR! ' + error);
+                                        if (connectedDevs[i] != null) {
+                                            if(error == "NetworkError: Authentication failed.")
+                                                showInfo("First pair the camera with your system bluetooth!");
+                                            else
+                                                showInfo("Connecting '" + connectedDevs[i].name + "' error: '" + error + "'. Please retry!", 5000);
+                                            
+                                            connectedDevs.splice(i, 1);
+                                            updateList();
+                                        }
+                                    });
                                 return;
                             case settingsUUID:
                                 connectedDevs[i].settingsCharacteristic = characteristic;
@@ -577,11 +589,20 @@
                                 connectedDevs[i].settingsRespCharacteristic = characteristic;
 
                                 // Start Notification
-                                connectedDevs[i].settingsRespCharacteristic.startNotifications().then(_ => {
-                                    console.log('> Characteristic Notifications started');
-                                    connectedDevs[i].settingsRespCharacteristic.addEventListener('characteristicvaluechanged',
-                                        handleRespNotifications);
-                                });
+                                connectedDevs[i].settingsRespCharacteristic.startNotifications()
+                                    .then(_ => {
+                                        console.log('> Characteristic Notifications started');
+                                        connectedDevs[i].settingsRespCharacteristic.addEventListener('characteristicvaluechanged',
+                                            handleRespNotifications);
+                                    })
+                                    .catch(error => {
+                                        console.log('ERROR! ' + error);
+                                        if (connectedDevs[i] != null) {
+                                            showInfo("Connecting '" + connectedDevs[i].name + "' error: '" + error + "'. Please retry!", 5000);
+                                            connectedDevs.splice(i, 1);
+                                            updateList();
+                                        }
+                                    });
                                 return;
                             case queryUUID:
                                 connectedDevs[i].queryCharacteristic = characteristic;
@@ -590,11 +611,20 @@
                                 connectedDevs[i].queryRespCharacteristic = characteristic;
 
                                 // Start Notification
-                                connectedDevs[i].queryRespCharacteristic.startNotifications().then(_ => {
-                                    console.log('> Characteristic Notifications started');
-                                    connectedDevs[i].queryRespCharacteristic.addEventListener('characteristicvaluechanged',
-                                        handleRespNotifications);
-                                });
+                                connectedDevs[i].queryRespCharacteristic.startNotifications()
+                                    .then(_ => {
+                                        console.log('> Characteristic Notifications started');
+                                        connectedDevs[i].queryRespCharacteristic.addEventListener('characteristicvaluechanged',
+                                            handleRespNotifications);
+                                    })
+                                    .catch(error => {
+                                        console.log('ERROR! ' + error);
+                                        if (connectedDevs[i] != null) {
+                                            showInfo("Connecting '" + connectedDevs[i].name + "' error: '" + error + "'. Please retry!", 5000);
+                                            connectedDevs.splice(i, 1);
+                                            updateList();
+                                        }
+                                    });
                                 return;
                             case modelNoUUID:
                                 connectedDevs[i].modelNoCharacteristic = characteristic;
@@ -662,7 +692,7 @@
             })
             .catch(error => {
                 console.log('ERROR! ' + error);
-                showInfo(error, 0);
+                //showInfo(error, 0);
             });
     }
 
