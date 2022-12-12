@@ -513,6 +513,7 @@
                         case controlServiceUUID:
                             console.log('Got control Service');
                             console.log('Getting control Characteristics...');
+                            showInfo("Getting control characteristics...", 6000);
                             getCharacteristic(service[i], commandUUID);
                             getCharacteristic(service[i], commandRespUUID);
                             getCharacteristic(service[i], settingsUUID);
@@ -523,11 +524,13 @@
                         case defInfoUUID:
                             console.log('Got defInfo Service');
                             console.log('Getting model_number_string Characteristic...');
+                            showInfo("Getting model_number_string characteristic...", 6000);
                             getCharacteristic(service[i], modelNoUUID);
                             break;
                         case battInfoUUID:
                             console.log('Got battInfo Service');
                             console.log('Getting battLevel Characteristic...');
+                            showInfo("Getting battLevel characteristic...", 6000);
                             getCharacteristic(service[i], battLevelUUID);
                             break;
                     }
@@ -560,8 +563,7 @@
                             case commandRespUUID:
                                 connectedDevs[i].commandRespCharacteristic = characteristic;
                                 // Start Notification
-                                connectedDevs[i].commandRespCharacteristic.startNotifications()
-                                    .then(_ => {
+                                connectedDevs[i].commandRespCharacteristic.startNotifications().then(_ => {
                                         console.log('> Characteristic Notifications started');
                                         connectedDevs[i].commandRespCharacteristic.addEventListener('characteristicvaluechanged',
                                             handleRespNotifications);
@@ -572,13 +574,6 @@
                                         connectedDevs[i].lastPresetQuery = new Date(0);
                                         connectedDevs[i].lastMemoryQuery = new Date(0);
                                         connectedDevs[i].lastBatteryRead = new Date(0);
-                                    })
-                                    .catch(error => {
-                                        console.log('ERROR! ' + error);
-                                        if (connectedDevs[i] != null) {
-                                            if(error == "NetworkError: Authentication failed.")
-                                                showInfo("First pair the camera with your system bluetooth!");
-                                        }
                                     });
                                 return;
                             case settingsUUID:
@@ -588,8 +583,7 @@
                                 connectedDevs[i].settingsRespCharacteristic = characteristic;
 
                                 // Start Notification
-                                connectedDevs[i].settingsRespCharacteristic.startNotifications()
-                                    .then(_ => {
+                                connectedDevs[i].settingsRespCharacteristic.startNotifications().then(_ => {
                                         console.log('> Characteristic Notifications started');
                                         connectedDevs[i].settingsRespCharacteristic.addEventListener('characteristicvaluechanged',
                                             handleRespNotifications);
@@ -602,8 +596,7 @@
                                 connectedDevs[i].queryRespCharacteristic = characteristic;
 
                                 // Start Notification
-                                connectedDevs[i].queryRespCharacteristic.startNotifications()
-                                    .then(_ => {
+                                connectedDevs[i].queryRespCharacteristic.startNotifications().then(_ => {
                                         console.log('> Characteristic Notifications started');
                                         connectedDevs[i].queryRespCharacteristic.addEventListener('characteristicvaluechanged',
                                             handleRespNotifications);
