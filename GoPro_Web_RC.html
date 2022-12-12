@@ -524,7 +524,7 @@
                 connectingDev.gatt.disconnect();
                 connectingDev = null;
                 console.log('ERROR! ' + error);
-                showInfo(error, 0);
+                showInfo("[onClickPair]" + error, 0);
             });
     }
 
@@ -650,7 +650,7 @@
             })
             .catch(error => {
                 console.log('ERROR! ' + error);
-                showInfo(error, 0);
+                showInfo("[readValue]" + error, 0);
             });
     }
 
