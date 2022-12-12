@@ -578,11 +578,6 @@
                                         if (connectedDevs[i] != null) {
                                             if(error == "NetworkError: Authentication failed.")
                                                 showInfo("First pair the camera with your system bluetooth!");
-                                            else
-                                                showInfo("Connecting '" + connectedDevs[i].name + "' error: '" + error + "'. Please retry!", 5000);
-                                            
-                                            connectedDevs.splice(i, 1);
-                                            updateList();
                                         }
                                     });
                                 return;
@@ -598,14 +593,6 @@
                                         console.log('> Characteristic Notifications started');
                                         connectedDevs[i].settingsRespCharacteristic.addEventListener('characteristicvaluechanged',
                                             handleRespNotifications);
-                                    })
-                                    .catch(error => {
-                                        console.log('ERROR! ' + error);
-                                        if (connectedDevs[i] != null) {
-                                            showInfo("Connecting '" + connectedDevs[i].name + "' error: '" + error + "'. Please retry!", 5000);
-                                            connectedDevs.splice(i, 1);
-                                            updateList();
-                                        }
                                     });
                                 return;
                             case queryUUID:
@@ -620,14 +607,6 @@
                                         console.log('> Characteristic Notifications started');
                                         connectedDevs[i].queryRespCharacteristic.addEventListener('characteristicvaluechanged',
                                             handleRespNotifications);
-                                    })
-                                    .catch(error => {
-                                        console.log('ERROR! ' + error);
-                                        if (connectedDevs[i] != null) {
-                                            showInfo("Connecting '" + connectedDevs[i].name + "' error: '" + error + "'. Please retry!", 5000);
-                                            connectedDevs.splice(i, 1);
-                                            updateList();
-                                        }
                                     });
                                 return;
                             case modelNoUUID:
