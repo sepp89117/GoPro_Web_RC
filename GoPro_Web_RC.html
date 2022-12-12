@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
+    
 <!--
     Author: sepp89117
-    Version: 1.2
-    Date: 2022-12-11
+    Version: 1.1
+    Date: 2022-12-12
 -->
 
 <head>
@@ -82,8 +82,6 @@
             background-color: #009fe0;
             border-radius: 5px;
             cursor: default;
-            display: inline-block;
-            width: 11px;
         }
 
         fieldset.foldable.expanded>legend::after {
@@ -93,8 +91,6 @@
             background-color: #009fe0;
             border-radius: 5px;
             cursor: default;
-            display: inline-block;
-            width: 11px;
         }
 
         .styled-table {
@@ -239,7 +235,7 @@
     <fieldset class="foldable expanded">
         <legend onclick="this.parentNode.classList.toggle('expanded');"><b>Load Presets</b></legend>
         <div style="display:inline-block;">
-            <input type="button" onclick="sendCommand(videoGroup);" value="Video Group" style="margin-top: 10px;">
+            <input type="button" onclick="sendCommand(videoGroup);" value="Video Group">
             <input type="button" onclick="sendCommand(photoGroup);" value="Photo Group">
             <input type="button" onclick="sendCommand(timelapseGroup);" value="Timelapse Group"><br>
             <input type="button" onclick="sendCommand(standard);" value="Standard">
@@ -261,7 +257,7 @@
             <thead>
                 <tr>
                     <th class="cam-th">Cam</th>
-                    <th style="width: 86px;">Menu</th>
+                    <th>Menu</th>
                 </tr>
             </thead>
             <tbody>
@@ -430,23 +426,14 @@
     var dev_list_body = document.getElementById("dev_list").tBodies[0];
 
     window.addEventListener("DOMContentLoaded", function () {
-        if (navigator.bluetooth === undefined) {
-            showInfo("Bluetooth is not available!", 0);
-        } else {
-            showInfo("Click on 'Connect/Pair new'", 0);
-            window.setInterval(intervalActions, 250);
-        }
+        showInfo("Click on 'Connect/Pair new'", 0);
+        window.setInterval(intervalActions, 250);
     });
 
     /*
     *   Pairing / Connecting
     */
     function onClickPair() {
-        if (navigator.bluetooth === undefined) {
-            showInfo("Bluetooth is not available!", 0);
-            alert("Bluetooth is not available!");
-            return;
-        }
         let filters = [];
         let options = {};
 
@@ -513,7 +500,6 @@
                         case controlServiceUUID:
                             console.log('Got control Service');
                             console.log('Getting control Characteristics...');
-                            showInfo("Getting control characteristics...", 6000);
                             getCharacteristic(service[i], commandUUID);
                             getCharacteristic(service[i], commandRespUUID);
                             getCharacteristic(service[i], settingsUUID);
@@ -524,25 +510,21 @@
                         case defInfoUUID:
                             console.log('Got defInfo Service');
                             console.log('Getting model_number_string Characteristic...');
-                            showInfo("Getting model_number_string characteristic...", 6000);
                             getCharacteristic(service[i], modelNoUUID);
                             break;
                         case battInfoUUID:
                             console.log('Got battInfo Service');
                             console.log('Getting battLevel Characteristic...');
-                            showInfo("Getting battLevel characteristic...", 6000);
                             getCharacteristic(service[i], battLevelUUID);
                             break;
                     }
                 }
             })
             .catch(error => {
-                if (connectingDev != null) {
-                    connectingDev.gatt.disconnect();
-                    connectingDev = null;
-                    showInfo(error, 0);
-                }
+                connectingDev.gatt.disconnect();
+                connectingDev = null;
                 console.log('ERROR! ' + error);
+                showInfo(error, 0);
             });
     }
 
@@ -564,17 +546,17 @@
                                 connectedDevs[i].commandRespCharacteristic = characteristic;
                                 // Start Notification
                                 connectedDevs[i].commandRespCharacteristic.startNotifications().then(_ => {
-                                        console.log('> Characteristic Notifications started');
-                                        connectedDevs[i].commandRespCharacteristic.addEventListener('characteristicvaluechanged',
-                                            handleRespNotifications);
+                                    console.log('> Characteristic Notifications started');
+                                    connectedDevs[i].commandRespCharacteristic.addEventListener('characteristicvaluechanged',
+                                        handleRespNotifications);
 
-                                        showInfo("Cam '" + connectedDevs[i].server.device.name + "' connected!", 3000);
-                                        connectedDevs[i].lastKeepAlive = new Date();
+                                    showInfo("Cam '" + connectedDevs[i].server.device.name + "' connected!", 3000);
+                                    connectedDevs[i].lastKeepAlive = new Date();
 
-                                        connectedDevs[i].lastPresetQuery = new Date(0);
-                                        connectedDevs[i].lastMemoryQuery = new Date(0);
-                                        connectedDevs[i].lastBatteryRead = new Date(0);
-                                    });
+                                    connectedDevs[i].lastPresetQuery = new Date(0);
+                                    connectedDevs[i].lastMemoryQuery = new Date(0);
+                                    connectedDevs[i].lastBatteryRead = new Date(0);
+                                });
                                 return;
                             case settingsUUID:
                                 connectedDevs[i].settingsCharacteristic = characteristic;
@@ -584,10 +566,10 @@
 
                                 // Start Notification
                                 connectedDevs[i].settingsRespCharacteristic.startNotifications().then(_ => {
-                                        console.log('> Characteristic Notifications started');
-                                        connectedDevs[i].settingsRespCharacteristic.addEventListener('characteristicvaluechanged',
-                                            handleRespNotifications);
-                                    });
+                                    console.log('> Characteristic Notifications started');
+                                    connectedDevs[i].settingsRespCharacteristic.addEventListener('characteristicvaluechanged',
+                                        handleRespNotifications);
+                                });
                                 return;
                             case queryUUID:
                                 connectedDevs[i].queryCharacteristic = characteristic;
@@ -597,10 +579,10 @@
 
                                 // Start Notification
                                 connectedDevs[i].queryRespCharacteristic.startNotifications().then(_ => {
-                                        console.log('> Characteristic Notifications started');
-                                        connectedDevs[i].queryRespCharacteristic.addEventListener('characteristicvaluechanged',
-                                            handleRespNotifications);
-                                    });
+                                    console.log('> Characteristic Notifications started');
+                                    connectedDevs[i].queryRespCharacteristic.addEventListener('characteristicvaluechanged',
+                                        handleRespNotifications);
+                                });
                                 return;
                             case modelNoUUID:
                                 connectedDevs[i].modelNoCharacteristic = characteristic;
@@ -668,7 +650,7 @@
             })
             .catch(error => {
                 console.log('ERROR! ' + error);
-                //showInfo(error, 0);
+                showInfo(error, 0);
             });
     }
 
