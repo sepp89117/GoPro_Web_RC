@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-    
+
 <!--
     Author: sepp89117
-    Version: 1.1
-    Date: 2022-12-12
+    Version: 1.2
+    Date: 2022-12-13
 -->
 
 <head>
@@ -33,7 +33,6 @@
 
         .list-btn {
             margin: 0;
-            /* padding: 2px 5px; */
         }
 
         input:hover {
@@ -82,6 +81,9 @@
             background-color: #009fe0;
             border-radius: 5px;
             cursor: default;
+            display: inline-block;
+            width: 11px;
+            text-align: center;
         }
 
         fieldset.foldable.expanded>legend::after {
@@ -91,6 +93,9 @@
             background-color: #009fe0;
             border-radius: 5px;
             cursor: default;
+            display: inline-block;
+            width: 11px;
+            text-align: center;
         }
 
         .styled-table {
@@ -161,7 +166,6 @@
             border-radius: 5px;
             background-color: #004073;
             font-size: 10pt;
-            /* color: #78d8ff; */
             color: white;
             border-top: 2px solid white;
         }
@@ -222,7 +226,7 @@
     </div>
     <span id="status" style="display: block;min-height: 22px;color:#ffbf00;"></span>
     <fieldset>
-        <legend><b>Control</b></legend>
+        <legend style="text-align: left;"><b>Control</b></legend>
         <div style="display:inline-block;">
             <input type="button" onclick="sendCommand(shutterOn);" value="Shutter: on">
             <input type="button" onclick="sendCommand(shutterOff);" value="Shutter: off"><br>
@@ -233,9 +237,10 @@
         </div>
     </fieldset>
     <fieldset class="foldable expanded">
-        <legend onclick="this.parentNode.classList.toggle('expanded');"><b>Load Presets</b></legend>
+        <legend style="text-align: left;" onclick="this.parentNode.classList.toggle('expanded');"><b>Load Presets</b>
+        </legend>
         <div style="display:inline-block;">
-            <input type="button" onclick="sendCommand(videoGroup);" value="Video Group">
+            <input type="button" onclick="sendCommand(videoGroup);" value="Video Group" style="margin-top: 10px;">
             <input type="button" onclick="sendCommand(photoGroup);" value="Photo Group">
             <input type="button" onclick="sendCommand(timelapseGroup);" value="Timelapse Group"><br>
             <input type="button" onclick="sendCommand(standard);" value="Standard">
@@ -251,13 +256,28 @@
         </div>
     </fieldset>
     <fieldset class="foldable expanded">
-        <legend onclick="this.parentNode.classList.toggle('expanded');toggleCamMenu();"><b>Connected devices</b>
+        <legend style="text-align: left;" onclick="this.parentNode.classList.toggle('expanded');toggleCamMenu();">
+            <b>Connected devices</b>
         </legend>
         <table id="dev_list" class="styled-table">
             <thead>
                 <tr>
                     <th class="cam-th">Cam</th>
-                    <th>Menu</th>
+                    <th style="width: 86px;">Menu</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </fieldset>
+    <fieldset class="foldable">
+        <legend style="text-align: left;" onclick="this.parentNode.classList.toggle('expanded');"><b>Error Log</b>
+        </legend>
+        <table id="error_log_table" class="styled-table">
+            <thead>
+                <tr>
+                    <th class="cam-th" style="width: 140px;">Timestamp</th>
+                    <th style="text-align: left;padding-left: 10px;">Message</th>
                 </tr>
             </thead>
             <tbody>
@@ -269,22 +289,28 @@
         <li class="menu-title has-submenu">Single Control
             <ul class="submenu">
                 <li class="item"
-                    onclick="sendCommandToSingle(shutterOn, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [shutterOn, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Shutter: on</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(shutterOff, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [shutterOff, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Shutter: off</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(camSleep, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [camSleep, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Put camera to sleep</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(wiFiAPoff, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [wiFiAPoff, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     WiFi AP: off</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(wiFiAPon, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [wiFiAPon, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     WiFi AP: on</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(hilight, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [locateOff, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
+                    Locate: off</li>
+                <li class="item"
+                    onclick="bufferBtAction(sendCommandToSingle, [locateOn, this.parentNode.parentNode.parentNode.dataset.camindex]);">
+                    Locate: on</li>
+                <li class="item"
+                    onclick="bufferBtAction(sendCommandToSingle, [hilight, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Hilight moment</li>
             </ul>
         </li>
@@ -292,43 +318,43 @@
         <li class="menu-title has-submenu">Single Load Preset
             <ul class="submenu">
                 <li class="item"
-                    onclick="sendCommandToSingle(videoGroup, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [videoGroup, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Video Group</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(photoGroup, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [photoGroup, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Photo Group</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(timelapseGroup, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [timelapseGroup, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Timelapse Group</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(standard, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [standard, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Standard</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(activity, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [activity, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Activity</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(cinematic, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [cinematic, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Cinematic</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(photo, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [photo, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Photo</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(liveBurst, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [liveBurst, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Live Burst</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(burstPhoto, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [burstPhoto, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Burst Photo</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(nightPhoto, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [nightPhoto, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Night Photo</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(timeWarp, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [timeWarp, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Time Warp</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(timeLapse, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [timeLapse, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Time Lapse</li>
                 <li class="item"
-                    onclick="sendCommandToSingle(nightLapse, this.parentNode.parentNode.parentNode.dataset.camindex); toggleCamMenu();">
+                    onclick="bufferBtAction(sendCommandToSingle, [nightLapse, this.parentNode.parentNode.parentNode.dataset.camindex]); toggleCamMenu();">
                     Night Lapse</li>
 
             </ul>
@@ -362,7 +388,7 @@
     var battLevelUUID = "00002a19-0000-1000-8000-00805f9b34fb"; // Battery level [READ | NOTIFY] -> "100% battery level"
 
     /*
-    * Commands
+    * BT-Commands
     */
     // Settings (0x0074)
     var keepAlive = Uint8Array.from([0x03, 0x5B, 0x01, 0x42]); // Only Hero 9 and 10 ? Hero 8 response is Error
@@ -370,6 +396,8 @@
     var shutterOff = Uint8Array.from([0x03, 0x01, 0x01, 0x00]);
     var shutterOn = Uint8Array.from([0x03, 0x01, 0x01, 0x01]);
     var camSleep = Uint8Array.from([0x01, 0x05]);
+    var locateOff = Uint8Array.from([0x03, 0x16, 0x01, 0x00]);
+    var locateOn = Uint8Array.from([0x03, 0x16, 0x01, 0x01]);
     var wiFiAPoff = Uint8Array.from([0x03, 0x17, 0x01, 0x00]);
     var wiFiAPon = Uint8Array.from([0x03, 0x17, 0x01, 0x01]);
     var hilight = Uint8Array.from([0x01, 0x18]);
@@ -424,10 +452,15 @@
     var connectingDev = null;
     var connectedDevs = [];
     var dev_list_body = document.getElementById("dev_list").tBodies[0];
+    var btActionBuffer = [];
+    var execMillis = 0;
 
     window.addEventListener("DOMContentLoaded", function () {
         showInfo("Click on 'Connect/Pair new'", 0);
+        execMillis = new Date();
+        bufferExecNext(); //starts the buffered execution of BT actions
         window.setInterval(intervalActions, 250);
+        logError("Program started")
     });
 
     /*
@@ -446,13 +479,13 @@
 
         navigator.bluetooth.requestDevice(options)
             .then(device => {
-                console.log("Connecting to Cam '" + device.name + "'.");
+                console.log("Connecting to '" + device.name + "'.");
                 showInfo("Connecting to '" + device.name + "'. Make sure the camera is powered on and wait...", 0);
 
                 // Check if device is always conencted
                 for (var i = 0; i < connectedDevs.length; i++) {
                     if (connectedDevs[i].server.device.id == device.id && connectedDevs[i].server.connected) {
-                        showInfo("The choosen Cam '" + device.name + "' is always connected!", 3000);
+                        showInfo(device.name + "' is always connected!", 3000);
                         return; // device is always connected
                     }
                 }
@@ -462,14 +495,18 @@
                 window.setTimeout(function () {
                     if (connectingDev != null) {
                         showInfo("Connecting '" + connectingDev.name + "' timeout! Please retry!", 5000);
-                        connectingDev.gatt.disconnect();
+                        if (connectingDev != null)
+                            connectingDev.gatt.disconnect();
                         connectingDev = null;
                     }
                 }, 60000);
                 return device.gatt.connect();
             })
             .then(server => {
-                if (server == null) return;
+                if (server == null) {
+                    logError("[gatt.connect] server is 'null'");
+                    return;
+                }
                 connectingDev = null;
                 console.log('GATT connected');
 
@@ -481,139 +518,187 @@
                 goProDevice.Preset = "N/A";
                 goProDevice.Battery = "?";
                 goProDevice.Memory = "?";
-                goProDevice.LC = "None";
-                goProDevice.LE = "None";
+                goProDevice.LE = "None"; // last error
+                goProDevice.lastKeepAlive = new Date();
+                goProDevice.lastPresetQuery = new Date();
+                goProDevice.lastMemoryQuery = new Date();
+                goProDevice.lastBatteryRead = new Date();
                 goProDevice.server.device.addEventListener('gattserverdisconnected', onDisconnected);
 
-                // Save connected Cam in array
+                // Save connected cam in array
                 connectedDevs.push(goProDevice);
-
+                showInfo("Cam '" + goProDevice.Name + "' connected!", 3000);
                 console.log('Getting Services...');
                 return server.getPrimaryServices();
             })
             .then(service => {
-                if (service == null) return;
+                if (service == null) {
+                    logError("[getPrimaryServices] service is 'null'");
+                    return;
+                }
 
-                var n = service.length;
-                for (var i = 0; i < n; i++) {
-                    switch (service[i].uuid) {
-                        case controlServiceUUID:
-                            console.log('Got control Service');
-                            console.log('Getting control Characteristics...');
-                            getCharacteristic(service[i], commandUUID);
-                            getCharacteristic(service[i], commandRespUUID);
-                            getCharacteristic(service[i], settingsUUID);
-                            getCharacteristic(service[i], settingsRespUUID);
-                            getCharacteristic(service[i], queryUUID);
-                            getCharacteristic(service[i], queryRespUUID);
-                            break;
-                        case defInfoUUID:
-                            console.log('Got defInfo Service');
-                            console.log('Getting model_number_string Characteristic...');
-                            getCharacteristic(service[i], modelNoUUID);
-                            break;
-                        case battInfoUUID:
-                            console.log('Got battInfo Service');
-                            console.log('Getting battLevel Characteristic...');
-                            getCharacteristic(service[i], battLevelUUID);
-                            break;
+                for (var d = 0; d < connectedDevs.length; d++) {
+                    if (connectedDevs[d].server.device.id == service[0].device.id) {
+                        connectedDevs[d].services = service;
+                        var dev = connectedDevs[d];
+
+                        for (var i = 0; i < dev.services.length; i++) {
+                            var service = dev.services[i];
+
+                            switch (service.uuid) {
+                                case controlServiceUUID:
+                                    console.log('Got control Service');
+                                    console.log('Getting control Characteristics...');
+                                    bufferBtAction(getCharacteristic, [service, commandUUID]);
+                                    bufferBtAction(getCharacteristic, [service, commandRespUUID]);
+                                    bufferBtAction(getCharacteristic, [service, settingsUUID]);
+                                    bufferBtAction(getCharacteristic, [service, settingsRespUUID]);
+                                    bufferBtAction(getCharacteristic, [service, queryUUID]);
+                                    bufferBtAction(getCharacteristic, [service, queryRespUUID]);
+                                    break;
+                                case defInfoUUID:
+                                    console.log('Got defInfo Service');
+                                    console.log('Getting model_number_string Characteristic...');
+                                    bufferBtAction(getCharacteristic, [service, modelNoUUID]);
+                                    break;
+                                case battInfoUUID:
+                                    console.log('Got battInfo Service');
+                                    console.log('Getting battLevel Characteristic...');
+                                    bufferBtAction(getCharacteristic, [service, battLevelUUID]);
+                                    break;
+                            }
+                        }
+                        break;
                     }
                 }
             })
             .catch(error => {
-                connectingDev.gatt.disconnect();
+                if (connectingDev != null)
+                    connectingDev.gatt.disconnect();
                 connectingDev = null;
-                console.log('ERROR! ' + error);
-                showInfo("[onClickPair]" + error, 0);
+                console.log(new Date().toLocaleString() + ' [onClickPair] ERROR! ' + error);
+                showInfo("[onClickPair] " + error, 0);
+                logError("[onClickPair] " + error);
             });
     }
 
-    function getCharacteristic(service, uuid) {
+    function getCharacteristic(args) {
+        var service = args[0],
+            uuid = args[1];
+
         service.getCharacteristic(uuid)
             .then(characteristic => {
-                if (characteristic == null) return;
+                bufferExecNext();
+                if (characteristic == null) {
+                    logError("[getCharacteristic] characteristic is 'null'");
+                    return;
+                }
                 console.log('Got Characteristic');
 
                 // Save characteristic in connectedDevs[i]
                 for (var i = 0; i < connectedDevs.length; i++) {
                     if (connectedDevs[i].server.device.id == characteristic.service.device.id) {
+                        var dev = connectedDevs[i];
 
                         switch (characteristic.uuid) {
                             case commandUUID:
-                                connectedDevs[i].commandCharacteristic = characteristic;
+                                dev.commandCharacteristic = characteristic;
                                 return;
                             case commandRespUUID:
-                                connectedDevs[i].commandRespCharacteristic = characteristic;
+                                dev.commandRespCharacteristic = characteristic;
                                 // Start Notification
-                                connectedDevs[i].commandRespCharacteristic.startNotifications().then(_ => {
+                                dev.commandRespCharacteristic.startNotifications().then(_ => {
                                     console.log('> Characteristic Notifications started');
-                                    connectedDevs[i].commandRespCharacteristic.addEventListener('characteristicvaluechanged',
-                                        handleRespNotifications);
-
-                                    showInfo("Cam '" + connectedDevs[i].server.device.name + "' connected!", 3000);
-                                    connectedDevs[i].lastKeepAlive = new Date();
-
-                                    connectedDevs[i].lastPresetQuery = new Date(0);
-                                    connectedDevs[i].lastMemoryQuery = new Date(0);
-                                    connectedDevs[i].lastBatteryRead = new Date(0);
+                                    dev.commandRespCharacteristic.addEventListener('characteristicvaluechanged', handleRespNotifications);
                                 });
                                 return;
                             case settingsUUID:
-                                connectedDevs[i].settingsCharacteristic = characteristic;
+                                dev.settingsCharacteristic = characteristic;
                                 return;
                             case settingsRespUUID:
-                                connectedDevs[i].settingsRespCharacteristic = characteristic;
+                                dev.settingsRespCharacteristic = characteristic;
 
                                 // Start Notification
-                                connectedDevs[i].settingsRespCharacteristic.startNotifications().then(_ => {
+                                dev.settingsRespCharacteristic.startNotifications().then(_ => {
                                     console.log('> Characteristic Notifications started');
-                                    connectedDevs[i].settingsRespCharacteristic.addEventListener('characteristicvaluechanged',
-                                        handleRespNotifications);
+                                    dev.settingsRespCharacteristic.addEventListener('characteristicvaluechanged', handleRespNotifications);
                                 });
                                 return;
                             case queryUUID:
-                                connectedDevs[i].queryCharacteristic = characteristic;
+                                dev.queryCharacteristic = characteristic;
                                 return;
                             case queryRespUUID:
-                                connectedDevs[i].queryRespCharacteristic = characteristic;
+                                dev.queryRespCharacteristic = characteristic;
 
                                 // Start Notification
-                                connectedDevs[i].queryRespCharacteristic.startNotifications().then(_ => {
+                                dev.queryRespCharacteristic.startNotifications().then(_ => {
                                     console.log('> Characteristic Notifications started');
-                                    connectedDevs[i].queryRespCharacteristic.addEventListener('characteristicvaluechanged',
-                                        handleRespNotifications);
+                                    dev.queryRespCharacteristic.addEventListener('characteristicvaluechanged', handleRespNotifications);
                                 });
                                 return;
                             case modelNoUUID:
-                                connectedDevs[i].modelNoCharacteristic = characteristic;
-                                readValue(characteristic);
+                                dev.modelNoCharacteristic = characteristic;
+                                bufferBtAction(readValue, [dev.modelNoCharacteristic]);
                                 return;
                             case battLevelUUID:
-                                connectedDevs[i].battLevelCharacteristic = characteristic;
-                                readValue(characteristic);
+                                dev.battLevelCharacteristic = characteristic;
+                                bufferBtAction(readValue, [dev.battLevelCharacteristic]);
                                 return;
                         }
                     }
                 }
             })
             .catch(error => {
-                console.log('ERROR! ' + error);
+                bufferExecNext();
+                console.log(new Date().toLocaleString() + ' [getCharacteristic] ERROR! ' + error);
+                logError("[getCharacteristic] " + error);
                 if (connectingDev != null) {
                     showInfo("Connecting '" + connectingDev.name + "' error: '" + error + "'. Please retry!", 5000);
-                    connectingDev.gatt.disconnect();
+                    if (connectingDev != null)
+                        connectingDev.gatt.disconnect();
                     connectingDev = null;
                 }
             });
     }
 
     /*
+    *   Non-blocking asynchronous execution of the BLE communication functions
+    */
+    function bufferBtAction(action, ...args) {
+        btActionBuffer.push([action, args]);
+    }
+
+    function bufferExecNext() {
+        var lastExecMillis = new Date() - execMillis;
+        console.log(new Date().toLocaleString() + ' [bufferExecNext] Last execution millis = ' + lastExecMillis);
+        (function chunk() {
+            if (btActionBuffer.length < 1) {
+                setTimeout(chunk, 0);
+            } else {
+                if (btActionBuffer.length >= 10)
+                    logError("[bufferExecNext] There is too much in the btActionBuffer! (" + btActionBuffer.length + ")");
+                execMillis = new Date();
+                var btAction = btActionBuffer.pop();
+                btAction[0](...btAction[1]); //TODO! Hardcoded number of arguments! How can this be done better?
+            }
+        })();
+    }
+
+    /*
     *   Active BLE communication
     */
-    function readValue(characteristic) {
-        if (characteristic == null) return;
-        console.log("[readValue] " + characteristic.uuid);
+    function readValue(args) { //maximum execution time measured is 122 ms
+        var characteristic = args[0];
+
+        if (characteristic == null) {
+            logError("[readValue] characteristic is 'null'");
+            bufferExecNext();
+            return;
+        }
+        console.log(new Date().toLocaleString() + ' [readValue] ' + characteristic.uuid);
         characteristic.readValue()
             .then(value => {
+                bufferExecNext();
                 for (var i = 0; i < connectedDevs.length; i++) {
                     if (connectedDevs[i].server.device.id == characteristic.service.device.id) {
                         let decoder = new TextDecoder('utf-8');
@@ -621,7 +706,6 @@
                         switch (characteristic.uuid) {
                             case modelNoUUID:
                                 let value_str = decoder.decode(value);
-
                                 connectedDevs[i].ModelID = parseInt("0x" + value_str);
 
                                 var model_name = gopro_models[connectedDevs[i].ModelID];
@@ -633,68 +717,89 @@
                                 }
 
                                 console.log('> Model is ' + connectedDevs[i].Model);
-
                                 updateList();
                                 return;
-
                             case battLevelUUID:
                                 connectedDevs[i].Battery = value.getUint8(0);
-                                //console.log('> Battery Level is ' + connectedDevs[i].Battery + '%');
 
                                 updateList();
                                 return;
                         }
                     }
                 }
-
             })
             .catch(error => {
-                console.log('ERROR! ' + error);
-                showInfo("[readValue]" + error, 0);
+                console.log(new Date().toLocaleString() + ' [readValue] ERROR! ' + error);
+                logError("[readValue] " + error);
+                bufferExecNext();
             });
     }
 
     function sendCommand(command) {
-        var headerLength = getHeaderLength(command);
-
         for (var i = 0; i < connectedDevs.length; i++) {
-            if (connectedDevs[i].server != null)
-                if (connectedDevs[i].server.connected) {
-                    connectedDevs[i].commandCharacteristic.writeValue(command);
-                    connectedDevs[i].LC = command[headerLength];
-                }
+            bufferBtAction(sendCommandToSingle, [command, i]);
         }
     }
 
-    function sendCommandToSingle(command, camIndex) {
+    function sendCommandToSingle(args) {
+        var command = args[0],
+            camIndex = args[1];
+
         var headerLength = getHeaderLength(command);
 
         if (connectedDevs[camIndex].server != null)
             if (connectedDevs[camIndex].server.connected) {
-                connectedDevs[camIndex].commandCharacteristic.writeValue(command);
-                connectedDevs[camIndex].LC = command[headerLength];
+                connectedDevs[camIndex].commandCharacteristic.writeValueWithoutResponse(command)
+                    .then(_ => {
+                        bufferExecNext();
+                    })
+                    .catch(error => {
+                        console.log(new Date().toLocaleString() + ' [sendCommandToSingle] ERROR! ' + error);
+                        logError("[sendCommandToSingle] " + error);
+                        bufferExecNext();
+                    });
             }
     }
 
-    function sendSettingToSingle(setting, camIndex) {
+    function sendSettingToSingle(args) {
+        var setting = args[0],
+            camIndex = args[1];
+
         var headerLength = getHeaderLength(setting);
 
         if (connectedDevs[camIndex].server != null)
             if (connectedDevs[camIndex].server.connected) {
-                console.log('[sendSettingToSingle] ' + setting);
-                connectedDevs[camIndex].settingsCharacteristic.writeValue(setting);
-                connectedDevs[camIndex].LC = setting[headerLength];
+                console.log(new Date().toLocaleString() + ' [sendSettingToSingle] ' + setting);
+                connectedDevs[camIndex].settingsCharacteristic.writeValueWithoutResponse(setting)
+                    .then(_ => {
+                        bufferExecNext();
+                    })
+                    .catch(error => {
+                        console.log(new Date().toLocaleString() + ' [sendSettingToSingle] ERROR! ' + error);
+                        logError("[sendSettingToSingle] " + error);
+                        bufferExecNext();
+                    });
             }
     }
 
-    function sendQueryToSingle(query, camIndex) {
+    function sendQueryToSingle(args) {
+        var query = args[0],
+            camIndex = args[1];
+
         var headerLength = getHeaderLength(query);
 
         if (connectedDevs[camIndex].server != null)
             if (connectedDevs[camIndex].server.connected) {
-                console.log('[sendQueryToSingle] ' + query);
-                connectedDevs[camIndex].queryCharacteristic.writeValue(query);
-                connectedDevs[camIndex].LC = query[headerLength];
+                console.log(new Date().toLocaleString() + ' [sendQueryToSingle] ' + query);
+                connectedDevs[camIndex].queryCharacteristic.writeValueWithoutResponse(query)
+                    .then(_ => {
+                        bufferExecNext();
+                    })
+                    .catch(error => {
+                        console.log(new Date().toLocaleString() + ' [sendQueryToSingle] ERROR! ' + error);
+                        logError("[sendQueryToSingle] " + error);
+                        bufferExecNext();
+                    });
             }
     }
 
@@ -704,7 +809,7 @@
         let yyL = (now.getFullYear() >> 8) & 0xFF;
         // Set date/time to 2022-01-02 03:04:05 	Command: 09: 0D: 07: 07:E6: 01: 02: 03: 04: 05
         var command = Uint8Array.from([0x09, 0x0d, 0x07, yyL, yyH, (now.getMonth() + 1), now.getDate(), now.getHours(), now.getMinutes(), now.getSeconds()]);
-        sendCommandToSingle(command, camIndex);
+        bufferBtAction(sendCommandToSingle, [command, camIndex]);
     }
 
     function intervalActions() {
@@ -713,34 +818,34 @@
                 var now = new Date();
 
                 // Send "keep alive" every 60 seconds; only for models newer then hero 8
-                if (now - connectedDevs[i].lastKeepAlive > 60000 && connectedDevs[i].ModelID > 50) {
-                    sendSettingToSingle(i, keepAlive);
-                    connectedDevs[i].lastKeepAlive = now;
+                if (now - connectedDevs[i].lastKeepAlive > 60000) {
+                    if (connectedDevs[i].ModelID > 50) {
+                        bufferBtAction(sendSettingToSingle, [i, keepAlive]);
+                        connectedDevs[i].lastKeepAlive = now;
+                    } else {
+                        // TODO other way to keep alive for hero 8 and downwards?
+                    }
                 }
 
                 // Query "Remaining space"
-                if (now - connectedDevs[i].lastPresetQuery > 5000) {
-                    sendQueryToSingle(qSpace, i);
-                    connectedDevs[i].lastPresetQuery = now;
-                }
-                // Query "Active preset"
-                if (now - connectedDevs[i].lastMemoryQuery > 1500) {
-                    if (connectedDevs[i].ModelID > 21) { // qPreset query not supported from Hero 5 Black
-                        sendQueryToSingle(qPreset, i);
-                    }
-                    else {
-                        // TODO other way to get preset from GoPro Hero 5 Black?
-                    }
+                if (now - connectedDevs[i].lastMemoryQuery > 7000) {
+                    bufferBtAction(sendQueryToSingle, [qSpace, i]);
                     connectedDevs[i].lastMemoryQuery = now;
                 }
+                // Query "Active preset"
+                if (now - connectedDevs[i].lastPresetQuery > 2000) {
+                    if (connectedDevs[i].ModelID > 21) { // qPreset query not supported from Hero 5 Black
+                        bufferBtAction(sendQueryToSingle, [qPreset, i]);
+                    } else {
+                        // TODO other way to get preset from GoPro Hero 5 Black?
+                    }
+                    connectedDevs[i].lastPresetQuery = now;
+                }
                 // Read "Battery level"
-                if (now - connectedDevs[i].lastBatteryRead > 10250) {
-                    readValue(connectedDevs[i].battLevelCharacteristic);
+                if (now - connectedDevs[i].lastBatteryRead > 10000) {
+                    bufferBtAction(readValue, [connectedDevs[i].battLevelCharacteristic]);
                     connectedDevs[i].lastBatteryRead = now;
                 }
-
-                if (i < connectedDevs.length - 1)
-                    delay(50);
             }
     }
 
@@ -816,14 +921,11 @@
         for (var i = 0; i < connectedDevs.length; i++) {
             if (connectedDevs[i].server.device.id == sender_id) {
                 showInfo("Cam '" + connectedDevs[i].server.device.name + "' disconnected.", 5000);
-
                 connectedDevs.splice(i, 1);
-
                 updateList();
                 break;
             }
         }
-
         // Close menu
         toggleCamMenu();
     }
@@ -833,17 +935,22 @@
     */
     function showInfo(text, millis) {
         document.getElementById("status").innerText = text;
-
         if (millis > 0)
             window.setTimeout(function () {
                 document.getElementById("status").innerText = "";
             }, millis);
     }
 
+    function logError(msg) {
+        var errTabBody = document.getElementById("error_log_table").tBodies[0];
+        var newRow = errTabBody.insertRow();
+        newRow.innerHTML = '<td class="cam-td" style="text-align: center;">' + new Date().toLocaleString() + '</td><td style="text-align: left;padding-left: 10px;">' + msg + '</td>';
+    }
+
     function updateList() {
         var tBody = "";
         for (var i = 0; i < connectedDevs.length; i++) {
-            tBody += '<tr><td class="cam-td"><div><span><b>Name: </b>' + connectedDevs[i].Name + '</span> <span><b>Model: </b>' + connectedDevs[i].Model + '</span></div><div><span><b>Preset: </b>' + connectedDevs[i].Preset + '</span></div><div><span><b>Battery: </b>' + connectedDevs[i].Battery + '%</span> <span><b>Memory: </b>' + connectedDevs[i].Memory + '</span></div><!--<div><span><b>Last Command: </b>' + connectedDevs[i].LC + '</span> <span><b>Last Response: </b>' + connectedDevs[i].LE + '</span></div>--></td><td><input type="button" class="list-btn" value="&#9776;" onclick="toggleCamMenu(this,  ' + i + ');"></td></tr>';
+            tBody += '<tr><td class="cam-td"><div><span><b>Name: </b>' + connectedDevs[i].Name + '</span> <span><b>Model: </b>' + connectedDevs[i].Model + '</span></div><div><span><b>Preset: </b>' + connectedDevs[i].Preset + '</span></div><div><span><b>Battery: </b>' + connectedDevs[i].Battery + '%</span> <span><b>Memory: </b>' + connectedDevs[i].Memory + '</span></div></td><td><input type="button" class="list-btn" value="&#9776;" onclick="toggleCamMenu(this,  ' + i + ');"></td></tr>';
         };
         dev_list_body.innerHTML = tBody;
     }
@@ -853,8 +960,7 @@
         if (menuBox.style.display == "block" || btn == null) { // if is menuBox displayed, hide it
             menuBox.style.display = "none";
             menuBox.dataset.camindex = -1;
-        }
-        else { // if is menuBox hidden, display it
+        } else { // if is menuBox hidden, display it
             menuBox.style.display = "block";
             menuBox.dataset.camindex = camIndex;
 
