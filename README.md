@@ -1,6 +1,10 @@
 # GoPro_Web_RC
 Easily control multiple GoPros with the web browser via Bluetooth, without additional hardware.
 
+## Important
+This program is immature. I stopped working on it for the time being due to low demand. I invested a lot more time in GoEasyPro_Android. https://github.com/sepp89117/GoEasyPro_Android
+<br>
+
 GoPro Bluetoothspecs are from https://gopro.github.io/OpenGoPro/ble
 
 Web Bluetooth API Docs: https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API 
