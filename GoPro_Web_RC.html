@@ -3,8 +3,8 @@
 
 <!--
     Author: sepp89117
-    Version: 1.2
-    Date: 2022-12-13
+    Version: 1.3
+    Date: 2023-05-28
 -->
 
 <head>
@@ -270,7 +270,7 @@
             </tbody>
         </table>
     </fieldset>
-    <fieldset class="foldable">
+    <fieldset id="errorLog" class="foldable">
         <legend style="text-align: left;" onclick="this.parentNode.classList.toggle('expanded');"><b>Error Log</b>
         </legend>
         <table id="error_log_table" class="styled-table">
@@ -467,6 +467,10 @@
     *   Pairing / Connecting
     */
     function onClickPair() {
+        if (connectingDev != null) {
+            showInfo("A connect process with '" + connectingDev.name + "' is already in progress!", 3000);
+            return;
+        }
         let filters = [];
         let options = {};
 
@@ -479,13 +483,19 @@
 
         navigator.bluetooth.requestDevice(options)
             .then(device => {
+                if (device.name === null) {
+                    showInfo("Device name is 'null'! Is the camera paired with your device via Bluetooth?", 6000);
+                    logError("[navigator.bluetooth.requestDevice] Device name is 'null'");
+                    resetConnectingDev();
+                    return;
+                }
                 console.log("Connecting to '" + device.name + "'.");
                 showInfo("Connecting to '" + device.name + "'. Make sure the camera is powered on and wait...", 0);
 
                 // Check if device is always conencted
                 for (var i = 0; i < connectedDevs.length; i++) {
                     if (connectedDevs[i].server.device.id == device.id && connectedDevs[i].server.connected) {
-                        showInfo(device.name + "' is always connected!", 3000);
+                        showInfo("'" + device.name + "' is always connected!", 3000);
                         return; // device is always connected
                     }
                 }
@@ -495,16 +505,14 @@
                 window.setTimeout(function () {
                     if (connectingDev != null) {
                         showInfo("Connecting '" + connectingDev.name + "' timeout! Please retry!", 5000);
-                        if (connectingDev != null)
-                            connectingDev.gatt.disconnect();
-                        connectingDev = null;
+                        resetConnectingDev();
                     }
                 }, 60000);
                 return device.gatt.connect();
             })
             .then(server => {
                 if (server == null) {
-                    logError("[gatt.connect] server is 'null'");
+                    logError("[gatt.connect] Server is 'null'");
                     return;
                 }
                 connectingDev = null;
@@ -533,7 +541,7 @@
             })
             .then(service => {
                 if (service == null) {
-                    logError("[getPrimaryServices] service is 'null'");
+                    logError("[getPrimaryServices] Service is 'null'");
                     return;
                 }
 
@@ -573,12 +581,9 @@
                 }
             })
             .catch(error => {
-                if (connectingDev != null)
-                    connectingDev.gatt.disconnect();
-                connectingDev = null;
-                console.log(new Date().toLocaleString() + ' [onClickPair] ERROR! ' + error);
                 showInfo("[onClickPair] " + error, 0);
                 logError("[onClickPair] " + error);
+                resetConnectingDev();
             });
     }
 
@@ -590,7 +595,7 @@
             .then(characteristic => {
                 bufferExecNext();
                 if (characteristic == null) {
-                    logError("[getCharacteristic] characteristic is 'null'");
+                    logError("[getCharacteristic] Characteristic is 'null'");
                     return;
                 }
                 console.log('Got Characteristic');
@@ -606,35 +611,21 @@
                                 return;
                             case commandRespUUID:
                                 dev.commandRespCharacteristic = characteristic;
-                                // Start Notification
-                                dev.commandRespCharacteristic.startNotifications().then(_ => {
-                                    console.log('> Characteristic Notifications started');
-                                    dev.commandRespCharacteristic.addEventListener('characteristicvaluechanged', handleRespNotifications);
-                                });
+                                startNotifications(dev.commandRespCharacteristic);
                                 return;
                             case settingsUUID:
                                 dev.settingsCharacteristic = characteristic;
                                 return;
                             case settingsRespUUID:
                                 dev.settingsRespCharacteristic = characteristic;
-
-                                // Start Notification
-                                dev.settingsRespCharacteristic.startNotifications().then(_ => {
-                                    console.log('> Characteristic Notifications started');
-                                    dev.settingsRespCharacteristic.addEventListener('characteristicvaluechanged', handleRespNotifications);
-                                });
+                                startNotifications(dev.settingsRespCharacteristic);
                                 return;
                             case queryUUID:
                                 dev.queryCharacteristic = characteristic;
                                 return;
                             case queryRespUUID:
                                 dev.queryRespCharacteristic = characteristic;
-
-                                // Start Notification
-                                dev.queryRespCharacteristic.startNotifications().then(_ => {
-                                    console.log('> Characteristic Notifications started');
-                                    dev.queryRespCharacteristic.addEventListener('characteristicvaluechanged', handleRespNotifications);
-                                });
+                                startNotifications(dev.queryRespCharacteristic);
                                 return;
                             case modelNoUUID:
                                 dev.modelNoCharacteristic = characteristic;
@@ -654,11 +645,53 @@
                 logError("[getCharacteristic] " + error);
                 if (connectingDev != null) {
                     showInfo("Connecting '" + connectingDev.name + "' error: '" + error + "'. Please retry!", 5000);
-                    if (connectingDev != null)
-                        connectingDev.gatt.disconnect();
-                    connectingDev = null;
+                    resetConnectingDev();
                 }
             });
+    }
+
+    function startNotifications(characteristic) {
+        characteristic.startNotifications()
+            .then(_ => {
+                console.log('> Characteristic Notifications started');
+                characteristic.addEventListener('characteristicvaluechanged', handleRespNotifications);
+            })
+            .catch(error => {
+                if (error.message.includes("Authentication failed")) {
+                    removeConnectedDev(characteristic.service.device);
+                    resetConnectingDev();
+
+                    showInfo("Authentication failed! Perform Bluetooth pairing first! See Error Log for details!");
+                    logError("[startNotifications] " + error);
+                    logError("Authentication failed!<br>Please first perform a Bluetooth pairing with the camera via your device Bluetooth manager!");
+                    document.getElementById("errorLog").classList.add('expanded');
+                }
+            });
+    }
+
+    function removeConnectedDev(dev) {
+        if (dev === null)
+            return;
+
+        for (var i = 0; i < connectedDevs.length; i++) {
+            if (connectedDevs[i].server.device.id == dev.gatt.device.id) {
+                connectedDevs[i].server.device.removeEventListener('gattserverdisconnected', onDisconnected);
+                connectedDevs[i].server.device.gatt.disconnect();
+                connectedDevs.splice(i, 1);
+                dev = null;
+                updateList();
+                break;
+            }
+        }
+    }
+
+    function resetConnectingDev() {
+        if (connectingDev === null)
+            return;
+
+        connectingDev.gatt.disconnect();
+        updateList();
+        connectingDev = null;
     }
 
     /*
@@ -691,7 +724,7 @@
         var characteristic = args[0];
 
         if (characteristic == null) {
-            logError("[readValue] characteristic is 'null'");
+            logError("[readValue] Characteristic is 'null'");
             bufferExecNext();
             return;
         }
@@ -921,6 +954,7 @@
         for (var i = 0; i < connectedDevs.length; i++) {
             if (connectedDevs[i].server.device.id == sender_id) {
                 showInfo("Cam '" + connectedDevs[i].server.device.name + "' disconnected.", 5000);
+                connectedDevs[i].server.device.removeEventListener('gattserverdisconnected', onDisconnected);
                 connectedDevs.splice(i, 1);
                 updateList();
                 break;
