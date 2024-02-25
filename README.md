@@ -2,14 +2,14 @@
 Easily control multiple GoPros with the web browser via Bluetooth, without additional hardware.
 
 ## Important
-This program is immature. I stopped working on it for the time being due to low demand. I invested a lot more time in GoEasyPro_Android. https://github.com/sepp89117/GoEasyPro_Android
+I invested a lot more time in GoEasyPro_Android. https://github.com/sepp89117/GoEasyPro_Android
 <br>
 
 GoPro Bluetoothspecs are from https://gopro.github.io/OpenGoPro/ble
 
 Web Bluetooth API Docs: https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API 
 
-<img src="https://github.com/sepp89117/GoPro_Web_RC/blob/main/preview_v1.2.png" width="630">
+<img src="https://github.com/sepp89117/GoPro_Web_RC/blob/main/preview_v2.0.png" width="630">
 
 Web browsers compatible with Bluetooth API see:
 https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API#browser_compatibility
@@ -21,6 +21,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API#browser_compa
 - Chrome on Android device (App needs permission to search for nearby devices)
 
 # Successfully tested GoPro models
+- Hero 12 Black
 - Hero 10 Black
 - Hero 9 Black
 - Hero 8 Black
@@ -41,8 +42,8 @@ The maximum number of simultaneous connections via BLE is theoretically not limi
 7. Now you can add more cameras (step 4.) or control the connected cameras.
 
 # TODO
-- Find commands for Hero 5 load preset
-- Find the keep alive command for Hero 8 and below models
+- implement protobuf without external references
+- implement some features from GoEasyPro_Android linke cam renaming
 
 # Known Issues
 - In the case of error messages with "NetworkError", the camera must be paired again with the control device.
