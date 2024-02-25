@@ -3,7 +3,7 @@
 
 <!--
     Author: sepp89117
-    Version: 2.0
+    Version: 2.1
     Date: 2024-02-25
 -->
 
@@ -274,7 +274,7 @@
         <span style="padding: 0;">
             <img src="logo.png" width="36" height="36">
             <b class="h2" style="vertical-align: super;margin-left: 5px;">GoPro Web RC</b>
-            <span style="vertical-align: super;margin-left: 5px;">v2.0</span>
+            <span style="vertical-align: super;margin-left: 5px;">v2.1</span>
         </span>
         <input type="button" onclick="onClickPair();" value="Connect/Pair new">
     </div>
@@ -526,6 +526,7 @@
     const nwManServiceUUID = "b5f90090-aa8d-11e3-9046-0002a5d5c51b";     // Query [WRITE]
     // Standard services
     const defInfoUUID = "0000180a-0000-1000-8000-00805f9b34fb";  // Device information
+    const battInfoUUID = "0000180f-0000-1000-8000-00805f9b34fb"; // Battery service
     // Custom GoPro characteristics
     const commandUUID = "b5f90072-aa8d-11e3-9046-0002a5d5c51b";       // Command [WRITE]
     const commandRespUUID = "b5f90073-aa8d-11e3-9046-0002a5d5c51b";   // Command response [NOTIFY]
@@ -540,6 +541,7 @@
     const wifiStateUUID = "b5f90005-aa8d-11e3-9046-0002a5d5c51b";        // Wifi [READ | INDICATE]
     // Standard characteristics
     const modelNoUUID = "00002a24-0000-1000-8000-00805f9b34fb";   // Model number
+    const battLevelUUID = "00002a19-0000-1000-8000-00805f9b34fb"; // Battery level [READ | NOTIFY] -> "100% battery level"
 
     /*
     * Protobuf
@@ -683,7 +685,7 @@
 
         filters.push({ services: [controlServiceUUID] });
         options.filters = filters;
-        options.optionalServices = [controlServiceUUID, defInfoUUID, wifiServiceUUID, nwManServiceUUID];
+        options.optionalServices = [controlServiceUUID, defInfoUUID, battInfoUUID, wifiServiceUUID, nwManServiceUUID];
 
         console.log('Requesting Bluetooth Device...');
         console.log('with ' + JSON.stringify(options));
@@ -748,6 +750,17 @@
                     lastPresetQuery: new Date(),
                     lastMemoryQuery: new Date(),
                     lastBatteryRead: new Date(),
+                    communicationInitiated: false,
+                    commandCharacteristic: null,
+                    commandRespCharacteristic: null,
+                    settingsCharacteristic: null,
+                    settingsRespCharacteristic: null,
+                    queryCharacteristic: null,
+                    queryRespCharacteristic: null,
+                    modelNoCharacteristic: null,
+                    wifiSsidCharacteristic: null,
+                    wifiPwCharacteristic: null,
+                    wifiStateCharacteristic: null
                 };
                 goProDevice.server.device.addEventListener('gattserverdisconnected', onDisconnected);
 
@@ -787,6 +800,11 @@
                                     console.log('Getting model_number_string Characteristic...');
                                     bufferBtAction(getCharacteristic, [service, modelNoUUID]);
                                     break;
+                                case battInfoUUID:
+                                    console.log('Got battInfo Service');
+                                    console.log('Getting battLevel Characteristic...');
+                                    bufferBtAction(getCharacteristic, [service, battLevelUUID]);
+                                    break;
                                 case wifiServiceUUID:
                                     console.log('Got wifi Service');
                                     console.log('Getting wifi Characteristics...');
@@ -825,75 +843,86 @@
                     logError("[getCharacteristic] Characteristic is 'null'");
                     return;
                 }
-                console.log('Got Characteristic');
+                const uuid = characteristic.uuid;
+                console.log('Got Characteristic ' + uuid);
 
                 // Save characteristic in connectedDevs[i]
                 for (var i = 0; i < connectedDevs.length; i++) {
                     if (connectedDevs[i].server.device.id == characteristic.service.device.id) {
                         var dev = connectedDevs[i];
 
-                        switch (characteristic.uuid) {
+                        switch (uuid) {
                             case commandUUID:
                                 dev.commandCharacteristic = characteristic;
-                                if (dev.commandRespCharacteristic != null) {
-                                    bufferBtAction(sendCommandToSingle, [getHardwareInfo, i]);
-                                }
                                 break;
                             case commandRespUUID:
                                 dev.commandRespCharacteristic = characteristic;
-                                startNotifications(dev.commandRespCharacteristic);
-                                if (dev.commandCharacteristic != null) {
-                                    bufferBtAction(sendCommandToSingle, [getHardwareInfo, i]);
-                                }
                                 break;
                             case settingsUUID:
                                 dev.settingsCharacteristic = characteristic;
-                                return;
+                                break;
                             case settingsRespUUID:
                                 dev.settingsRespCharacteristic = characteristic;
-                                startNotifications(dev.settingsRespCharacteristic);
-                                return;
+                                break;
                             case queryUUID:
                                 dev.queryCharacteristic = characteristic;
-                                if (dev.queryRespCharacteristic != null) {
-                                    bufferBtAction(sendQueryToSingle, [queryAllStatusValues, i]);
-                                    bufferBtAction(sendQueryToSingle, [registerForAllStatusValueUpdates, i]);
-                                }
                                 break;
                             case queryRespUUID:
                                 dev.queryRespCharacteristic = characteristic;
-                                startNotifications(dev.queryRespCharacteristic);
-                                if (dev.queryCharacteristic != null) {
-                                    bufferBtAction(sendQueryToSingle, [queryAllStatusValues, i]);
-                                    bufferBtAction(sendQueryToSingle, [registerForAllStatusValueUpdates, i]);
-                                }
                                 break;
                             case modelNoUUID:
                                 dev.modelNoCharacteristic = characteristic;
-                                if (dev.ModelID <= 0)
-                                    bufferBtAction(readValue, [dev.modelNoCharacteristic]);
-                                return;
+                                break;
+                            case battLevelUUID:
+                                dev.battLevelCharacteristic = characteristic;
+                                break;
                             case wifiSsidUUID:
                                 dev.wifiSsidCharacteristic = characteristic;
-                                bufferBtAction(readValue, [dev.wifiSsidCharacteristic]);
-                                return;
+                                break;
                             case wifiPwUUID:
                                 dev.wifiPwCharacteristic = characteristic;
-                                bufferBtAction(readValue, [dev.wifiPwCharacteristic]);
-                                return;
+                                break;
                             case wifiStateUUID:
                                 dev.wifiStateCharacteristic = characteristic;
-                                bufferBtAction(readValue, [dev.wifiStateCharacteristic]);
-                                return;
+                                break;
                             case nwManCmdUUID:
                                 // TODO implement
                                 dev.nwManCmdCharacteristic = characteristic;
-                                return;
+                                break;
                             case nwManRespUUID:
                                 // unused
                                 dev.nwManRespCharacteristic = characteristic;
-                                return;
+                                break;
                         }
+
+                        if (!dev.communicationInitiated &&
+                            dev.commandCharacteristic != null &&
+                            dev.commandRespCharacteristic != null &&
+                            dev.settingsCharacteristic != null &&
+                            dev.settingsRespCharacteristic != null &&
+                            dev.queryCharacteristic != null &&
+                            dev.queryRespCharacteristic != null &&
+                            dev.modelNoCharacteristic != null &&
+                            dev.wifiSsidCharacteristic != null &&
+                            dev.wifiPwCharacteristic != null &&
+                            dev.wifiStateCharacteristic != null) {
+
+                            bufferBtAction(startNotification, [dev.commandRespCharacteristic, i]); //startCrcNotification();
+                            bufferBtAction(startNotification, [dev.settingsRespCharacteristic, i]); //startSrcNotification();
+                            bufferBtAction(startNotification, [dev.queryRespCharacteristic, i]); //startQrcNotification();
+
+                            bufferBtAction(sendCommandToSingle, [getHardwareInfo, i]); //getHardwareInfo();
+                            bufferBtAction(readValue, [dev.wifiSsidCharacteristic]);
+                            bufferBtAction(readValue, [dev.wifiPwCharacteristic]); //readWifiApPw();
+                            bufferBtAction(sendQueryToSingle, [registerForAllStatusValueUpdates, i]); //registerForAllStatusValueUpdates();
+                            //getUTCDateTime();
+                            bufferBtAction(readValue, [dev.wifiStateCharacteristic]);
+                            if (dev.ModelID <= 0)
+                                bufferBtAction(readValue, [dev.modelNoCharacteristic]);
+
+                            dev.communicationInitiated = true;
+                        }
+
                     }
                 }
             })
@@ -913,6 +942,7 @@
             .then(_ => {
                 console.log('> Characteristic Notifications started');
                 characteristic.addEventListener('characteristicvaluechanged', parseBtData);
+                bufferExecNext();
             })
             .catch(error => {
                 if (error.message.includes("Authentication failed")) {
@@ -923,7 +953,10 @@
                     logError("[startNotifications] " + error);
                     logError("Authentication failed!<br>Please first perform a Bluetooth pairing with the camera via your device Bluetooth manager!");
                     document.getElementById("errorLog").classList.add('expanded');
+                } else {
+                    logError("[startNotifications] " + error);
                 }
+                bufferExecNext()
             });
     }
 
@@ -965,11 +998,11 @@
             if (btActionBuffer.length < 1) {
                 setTimeout(chunk, 0);
             } else {
-                if (btActionBuffer.length >= 20)
+                if (btActionBuffer.length >= 100)
                     logError("[bufferExecNext] There is too much in the btActionBuffer! (" + btActionBuffer.length + ")");
                 execMillis = new Date();
-                var btAction = btActionBuffer.pop();
-                btAction[0](...btAction[1]); //TODO! Hardcoded number of arguments! How can this be done better?
+                var btAction = btActionBuffer.shift(); // use shift to get the first element from btActionBuffer
+                btAction[0](...btAction[1]);
             }
         })();
     }
@@ -1011,6 +1044,11 @@
                                 }
 
                                 console.log('> Model is ' + connectedDevs[i].Model);
+                                updateList();
+                                return;
+                            case battLevelUUID:
+                                connectedDevs[i].Battery = value.getUint8(0);
+
                                 updateList();
                                 return;
                             case wifiSsidUUID:
@@ -1085,7 +1123,7 @@
         if (characteristic != null && connectedDevs[camIndex].server != null && connectedDevs[camIndex].server.connected)
             sendToSingle(data, characteristic);
     }
-    
+
     // TODO currently unused -> Use this option to set the WiFi AP password or confirm the WiFi AP SSID name change
     function sendWifiPwToSingle(args) {
         const data = args[0],
@@ -1132,10 +1170,18 @@
         bufferBtAction(sendCommandToSingle, [command, camIndex]);
     }
 
+    function startNotification(args) {
+        const characteristic = args[0],
+            camIndex = args[1];
+
+        if (characteristic != null && connectedDevs[camIndex].server != null && connectedDevs[camIndex].server.connected)
+            startNotifications(characteristic);
+    }
+
     function intervalActions() {
         if (connectingDev == null)
             for (var i = 0; i < connectedDevs.length; i++) {
-                if (!connectedDevs[i].server.connected)
+                if (!connectedDevs[i].server.connected || !connectedDevs[i].communicationInitiated)
                     continue;
 
                 var now = new Date();
