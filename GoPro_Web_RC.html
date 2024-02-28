@@ -1155,7 +1155,9 @@
 
         characteristic.writeValueWithoutResponse(payload)
             .then(_ => {
-                bufferExecNext();
+                if (characteristic.uuid == wifiSsidUUID) {
+                    bufferExecNext();
+                }
             })
             .catch(error => {
                 console.log(new Date().toLocaleString() + ' [sendToSingle] ERROR! ' + error);
